@@ -75,16 +75,10 @@ class DrawableMesh
         inline void setThreshMax(int _threshMax) { m_threshMax = _threshMax; }
         /*! \fn setUseGammaCorrecFlag */
         inline void setUseGammaCorrecFlag(bool _useGammaCorrec) { m_useGammaCorrec = _useGammaCorrec; }
-        /*! \fn setUseLogCompFlag */
-        inline void setUseLogCompFlag(bool _useLogComp) { m_useLogComp = _useLogComp; }
         /*! \fn setModeVR */
         inline void setModeVR(int _modeVR) { m_modeVR = _modeVR; }
         /*! \fn setMaxSteps */
         inline void setMaxSteps(int _maxSteps) { m_maxSteps = _maxSteps; }
-        /*! \fn setLog */
-        inline void setLog(float _log) { m_log = _log; }
-        /*! \fn setBrightness */
-        inline void setBrightness(float _brightness) { m_brightness = _brightness; }
 
         /*! \fn getThreshMin */
         inline int getThreshMin() { return m_threshMin; }
@@ -92,16 +86,10 @@ class DrawableMesh
         inline int getThreshMax() { return m_threshMax; }
         /*! \fn getUseGammaCorrecFlag */
         inline bool getUseGammaCorrecFlag() { return m_useGammaCorrec; }
-        /*! \fn getUseLogCompFlag */
-        inline bool getUseLogCompFlag() { return m_useLogComp; }
         /*! \fn getModeVR */
         inline bool getModeVR() { return m_modeVR; }
         /*! \fn getMaxSteps */
         inline bool getMaxSteps() { return m_maxSteps; }
-        /*! \fn getLog */
-        inline float getLog() { return m_log; }
-        /*! \fn getBrightness */
-        inline float getBrightness() { return m_brightness; }
 
 
         /*------------------------------------------------------------------------------------------------------------+
@@ -204,11 +192,8 @@ class DrawableMesh
         int m_threshMin;            /*!< lower threshold for rendering */
         int m_threshMax;            /*!< upper threshold for rendering */
         bool m_useGammaCorrec;      /*!< flag to apply gamma correction or not */
-        bool m_useLogComp;          /*!< flag to apply Log compression or not */
         int m_modeVR;               /*!< VR mode (1 = MIP, 2 = alpha blending, 3 = custom)*/
         int m_maxSteps;             /*!< max nb of steps for ray-casting (= diagonal length of volume box)*/
-        float m_log;                /*!< Log value for Log compression */
-        float m_brightness;         /*!< Brightness value for Log compression */
 
         bool m_vertexProvided;      /*!< flag to indicate if vertex coords are available or not */
         bool m_normalProvided;      /*!< flag to indicate if normals are available or not */

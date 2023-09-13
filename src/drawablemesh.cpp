@@ -13,13 +13,9 @@
 
 DrawableMesh::DrawableMesh()
 {
-    /* TODO */
-    //m_defaultVAO = 0;
-
     setThreshMin(0);
     setThreshMax(255);
     setUseGammaCorrecFlag(false);
-    setUseLogCompFlag(false);
     setModeVR(1);
 
     m_vertexProvided = false;
@@ -449,9 +445,6 @@ void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex,
     glUniform1i(glGetUniformLocation(_program, "u_volumeTexture"), 0);
     glUniform1i(glGetUniformLocation(_program, "u_frontFaceTexture"), 1);
     glUniform1i(glGetUniformLocation(_program, "u_backFaceTexture"), 2);
-    glUniform1i(glGetUniformLocation(_program, "u_useLogComp"), m_useLogComp);
-    glUniform1f(glGetUniformLocation(_program, "u_log"), m_log);
-    glUniform1f(glGetUniformLocation(_program, "u_brightness"), m_brightness);
     glUniform1i(glGetUniformLocation(_program, "u_useGammaCorrec"), m_useGammaCorrec);
     glUniform1f(glGetUniformLocation(_program, "u_threshMin"), (float)m_threshMin / 255.0f );
     glUniform1f(glGetUniformLocation(_program, "u_threshMax"), (float)m_threshMax / 255.0f );
@@ -490,9 +483,6 @@ void DrawableMesh::drawRayCastReslice(GLuint _program, glm::mat4 _modelMat, glm:
     glUniform1i(glGetUniformLocation(_program, "u_volumeTexture"), 0);
     glUniform1i(glGetUniformLocation(_program, "u_frontFaceTexture"), 1);
     glUniform1i(glGetUniformLocation(_program, "u_backFaceTexture"), 2);
-    glUniform1i(glGetUniformLocation(_program, "u_useLogComp"), m_useLogComp);
-    glUniform1f(glGetUniformLocation(_program, "u_log"), m_log);
-    glUniform1f(glGetUniformLocation(_program, "u_brightness"), m_brightness);
     glUniform1i(glGetUniformLocation(_program, "u_useGammaCorrec"), m_useGammaCorrec);
     glUniform1f(glGetUniformLocation(_program, "u_dPlan"), _d);
 
@@ -528,9 +518,6 @@ void DrawableMesh::drawSlice(GLuint _program, glm::mat4 _modelMat, glm::mat4 _vi
     glUniformMatrix4fv(glGetUniformLocation(_program, "u_matTex"), 1, GL_FALSE, &_tex3dMat[0][0]);
     glUniform1i(glGetUniformLocation(_program, "u_volumeTexture"), 0);
     glUniform1i(glGetUniformLocation(_program, "u_lookupTexture"), 1);
-    glUniform1i(glGetUniformLocation(_program, "u_useLogComp"), m_useLogComp);
-    glUniform1f(glGetUniformLocation(_program, "u_log"), m_log);
-    glUniform1f(glGetUniformLocation(_program, "u_brightness"), m_brightness);
     glUniform1i(glGetUniformLocation(_program, "u_useGammaCorrec"), m_useGammaCorrec);
     glUniform1f(glGetUniformLocation(_program, "u_threshMin"), (float)m_threshMin / 255.0f);
     glUniform1f(glGetUniformLocation(_program, "u_threshMax"), (float)m_threshMax / 255.0f);
