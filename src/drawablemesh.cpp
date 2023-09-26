@@ -13,8 +13,6 @@
 
 DrawableMesh::DrawableMesh()
 {
-    setThreshMin(0);
-    setThreshMax(255);
     setUseGammaCorrecFlag(false);
     setModeVR(1);
 
@@ -405,29 +403,6 @@ void DrawableMesh::drawCutPlane(GLuint _program, glm::mat4 _modelMat, glm::mat4 
 
 }
 
-void DrawableMesh::drawWF(GLuint _programW, glm::mat4 _modelMat, glm::mat4 _viewMat, glm::mat4 _projMat)
-{
-
-    glClear(GL_DEPTH_BUFFER_BIT);
-    // Activate program
-    glUseProgram(_programW);
-
-    // Pass uniforms
-    glUniformMatrix4fv(glGetUniformLocation(_programW, "u_matM"), 1, GL_FALSE, &_modelMat[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(_programW, "u_matV"), 1, GL_FALSE, &_viewMat[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(_programW, "u_matP"), 1, GL_FALSE, &_projMat[0][0]);
-
-    // Draw!
-    glBindVertexArray(m_meshVAO);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glDrawElements(GL_TRIANGLES, m_numIndices, GL_UNSIGNED_INT, 0);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-    glBindVertexArray(m_defaultVAO);
-    glUseProgram(0);
-
-}
-
 
 void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex)
 {
@@ -446,8 +421,6 @@ void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex,
     glUniform1i(glGetUniformLocation(_program, "u_frontFaceTexture"), 1);
     glUniform1i(glGetUniformLocation(_program, "u_backFaceTexture"), 2);
     glUniform1i(glGetUniformLocation(_program, "u_useGammaCorrec"), m_useGammaCorrec);
-    glUniform1f(glGetUniformLocation(_program, "u_threshMin"), (float)m_threshMin / 255.0f );
-    glUniform1f(glGetUniformLocation(_program, "u_threshMax"), (float)m_threshMax / 255.0f );
     glUniform1i(glGetUniformLocation(_program, "u_modeVR"), m_modeVR);
     glUniform1i(glGetUniformLocation(_program, "u_maxSteps"), m_maxSteps);
 
@@ -519,9 +492,6 @@ void DrawableMesh::drawSlice(GLuint _program, glm::mat4 _modelMat, glm::mat4 _vi
     glUniform1i(glGetUniformLocation(_program, "u_volumeTexture"), 0);
     glUniform1i(glGetUniformLocation(_program, "u_lookupTexture"), 1);
     glUniform1i(glGetUniformLocation(_program, "u_useGammaCorrec"), m_useGammaCorrec);
-    glUniform1f(glGetUniformLocation(_program, "u_threshMin"), (float)m_threshMin / 255.0f);
-    glUniform1f(glGetUniformLocation(_program, "u_threshMax"), (float)m_threshMax / 255.0f);
-
 
     // Draw!
     glBindVertexArray(m_meshVAO);                       // bind the VAO

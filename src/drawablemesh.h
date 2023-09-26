@@ -69,10 +69,6 @@ class DrawableMesh
         |                                              GETTERS/SETTERS                                                |
         +-------------------------------------------------------------------------------------------------------------*/
         
-        /*! \fn setThreshMin */
-        inline void setThreshMin(int _threshMin) { m_threshMin = _threshMin; }
-        /*! \fn setThreshMax */
-        inline void setThreshMax(int _threshMax) { m_threshMax = _threshMax; }
         /*! \fn setUseGammaCorrecFlag */
         inline void setUseGammaCorrecFlag(bool _useGammaCorrec) { m_useGammaCorrec = _useGammaCorrec; }
         /*! \fn setModeVR */
@@ -80,10 +76,6 @@ class DrawableMesh
         /*! \fn setMaxSteps */
         inline void setMaxSteps(int _maxSteps) { m_maxSteps = _maxSteps; }
 
-        /*! \fn getThreshMin */
-        inline int getThreshMin() { return m_threshMin; }
-        /*! \fn getThreshMax */
-        inline int getThreshMax() { return m_threshMax; }
         /*! \fn getUseGammaCorrecFlag */
         inline bool getUseGammaCorrecFlag() { return m_useGammaCorrec; }
         /*! \fn getModeVR */
@@ -153,9 +145,8 @@ class DrawableMesh
 
         void drawRayCastReslice(GLuint _program, glm::mat4 _modelMat, glm::mat4 _viewMat, glm::mat4 _projMat, glm::mat4 _rotMat, glm::vec3 _camPos, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, float _d);
 
-
         void drawCutPlane(GLuint _program, glm::mat4 _modelMat, glm::mat4 _modelMat2, glm::mat4 _viewMat, glm::mat4 _projMat, GLuint _3dTex);
-        void drawWF(GLuint _programW, glm::mat4 _modelMat, glm::mat4 _viewMat, glm::mat4 _projMat);
+
         /*!
         * \fn drawSlice
         * \brief Draw slice-quad with 3D texture mapping
@@ -189,8 +180,6 @@ class DrawableMesh
         unsigned int m_numVertices; /*!< number of vertices in the VBOs */
         unsigned int m_numIndices;  /*!< number of indices in the index VBO */
 
-        int m_threshMin;            /*!< lower threshold for rendering */
-        int m_threshMax;            /*!< upper threshold for rendering */
         bool m_useGammaCorrec;      /*!< flag to apply gamma correction or not */
         int m_modeVR;               /*!< VR mode (1 = MIP, 2 = alpha blending, 3 = custom)*/
         int m_maxSteps;             /*!< max nb of steps for ray-casting (= diagonal length of volume box)*/
