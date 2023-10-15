@@ -279,20 +279,6 @@ void DrawableMesh::drawScreenQuad(GLuint _program, GLuint _tex, bool _isBlurOn, 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _tex);
 
-
-    if(_isBlurOn)
-        glUniform1i(glGetUniformLocation(_program, "isBlurOn"), 1);
-    else
-        glUniform1i(glGetUniformLocation(_program, "isBlurOn"), 0);
-
-    if(_isGaussH)
-        glUniform1i(glGetUniformLocation(_program, "isFilterH"), 1);
-    else
-        glUniform1i(glGetUniformLocation(_program, "isFilterH"), 0);
-
-    glUniform1i(glGetUniformLocation(_program, "filterSize"), _filterWidth);
-
-
     GLint ShadowMapUniform = glGetUniformLocation(_program, "u_screenTex");
     if (ShadowMapUniform == -1) {
         fprintf(stderr, "[ERROR] DrawableMesh::drawScreenQuad(): Could not bind screen quad texture\n");
@@ -314,7 +300,7 @@ void DrawableMesh::drawScreenQuad(GLuint _program, GLuint _tex, bool _isBlurOn, 
 }
 
 
-void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue)
+void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue, glm::mat4 _mvpMat)
 {
     glUseProgram(_program);
 
@@ -334,6 +320,8 @@ void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex,
     glUniform1i(glGetUniformLocation(_program, "u_modeVR"), m_modeVR);
     glUniform1i(glGetUniformLocation(_program, "u_maxSteps"), m_maxSteps);
     glUniform1f(glGetUniformLocation(_program, "u_isoValue"), (float)_isoValue / 255.0f);
+    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matMVP"), 1, GL_FALSE, &_mvpMat[0][0]);
+
 
     // Draw!
     glBindVertexArray(m_meshVAO);                       // bind the VAO

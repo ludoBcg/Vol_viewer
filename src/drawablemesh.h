@@ -140,7 +140,7 @@ class DrawableMesh
         * \param _backTex : 2D texture with back face color rendering of bounding geometry
         * \param _1dTex : 1D texture for transfer function (i.e., lookup table)
         */
-        void drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue);
+        void drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue, glm::mat4 _mvpMat);
 
         /*!
         * \fn drawSlice
