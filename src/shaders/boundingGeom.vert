@@ -17,8 +17,6 @@ uniform mat4 u_matP;
 // OUTPUT
 out vec3 vert_uv;
 
-uniform mat4 u_mvp;
-
 
 void main()
 {
