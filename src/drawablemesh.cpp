@@ -106,67 +106,6 @@ void DrawableMesh::createScreenQuadVAO()
 }
 
 
-void DrawableMesh::createCutPlaneVAO()
-{
-
-    //std::vector<glm::vec3> vertices = { glm::vec3(-1.0f, -1.0f, 0.5f), glm::vec3(2.0f, -1.0f, 0.5f), glm::vec3(2.0f, 2.0f, 0.5f), glm::vec3(-1.0f, 2.0f, 0.5f) };
-    //std::vector<glm::vec3>normals = { glm::vec3(1.0f, 1.0f,  1.0f), glm::vec3(1.0f, 1.0f,  1.0f), glm::vec3(1.0f, 1.0f,  1.0f), glm::vec3(1.0f, 1.0f,  1.0f) };
-    //std::vector<uint32_t> indices{ 0, 1, 2, 2, 3, 0 };
-    std::vector<glm::vec3> vertices;
-    std::vector<glm::vec3> texcoords;
-    vertices = { glm::vec3(0.5f,  0.5f,  0.0f), glm::vec3(-0.5f,  0.5f,  0.0f), glm::vec3(-0.5f, -0.5f,  0.0f), glm::vec3(0.5f, -0.5f,  0.0f) };
-    texcoords = { glm::vec3(-0.5f, -0.5f, 0.5f),    glm::vec3(1.5f, -0.5f, 0.5f),   glm::vec3(1.5f, 1.5f, 0.5f),   glm::vec3(-0.5f, 1.5f, 0.5f) };
-
-
-    std::vector<uint32_t> indices = { 0, 1, 2, 0, 2, 3 };
-
-
-
-    // Generates and populates a VBO for vertex coords
-    glGenBuffers(1, &(m_vertexVBO));
-    glBindBuffer(GL_ARRAY_BUFFER, m_vertexVBO);
-    size_t verticesNBytes = vertices.size() * sizeof(vertices[0]);
-    glBufferData(GL_ARRAY_BUFFER, verticesNBytes, vertices.data(), GL_STATIC_DRAW);
-
-    // Generates and populates a VBO for 3D Tex coords
-    glGenBuffers(1, &(m_tex3dVBO));
-    glBindBuffer(GL_ARRAY_BUFFER, m_tex3dVBO);
-    size_t texcoordsNBytes = texcoords.size() * sizeof(texcoords[0]);
-    glBufferData(GL_ARRAY_BUFFER, texcoordsNBytes, texcoords.data(), GL_STATIC_DRAW);
-
-    // Generates and populates a VBO for the element indices
-    glGenBuffers(1, &(m_indexVBO));
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexVBO);
-    size_t indicesNBytes = indices.size() * sizeof(indices[0]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesNBytes, indices.data(), GL_STATIC_DRAW);
-
-
-    // Creates a vertex array object (VAO) for drawing the mesh
-    glGenVertexArrays(1, &(m_meshVAO));
-    glBindVertexArray(m_meshVAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, m_vertexVBO);
-    glEnableVertexAttribArray(POSITION);
-    glVertexAttribPointer(POSITION, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-    glBindBuffer(GL_ARRAY_BUFFER, m_tex3dVBO);
-    glEnableVertexAttribArray(TEX3D);
-    glVertexAttribPointer(TEX3D, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexVBO);
-    glBindVertexArray(m_defaultVAO); // unbinds the VAO
-
-    // Additional information required by draw calls
-    m_numVertices = (unsigned int)vertices.size();
-    m_numIndices = (unsigned int)indices.size();
-
-    // Clear temporary vectors
-    vertices.clear();
-    texcoords.clear();
-    indices.clear();
-}
-
-
 void DrawableMesh::createUnitCubeVAO()
 {
 
@@ -374,37 +313,8 @@ void DrawableMesh::drawScreenQuad(GLuint _program, GLuint _tex, bool _isBlurOn, 
     glUseProgram(0);
 }
 
-void DrawableMesh::drawCutPlane(GLuint _program, glm::mat4 _modelMat, glm::mat4 _modelMat2, glm::mat4 _viewMat, glm::mat4 _projMat, GLuint _3dTex)
-{
-    glUseProgram(_program);
 
-    // bind textures
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_3D, _3dTex);
-
-    // set uniforms
-    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matM"), 1, GL_FALSE, &_modelMat[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matM2"), 1, GL_FALSE, &_modelMat2[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matV"), 1, GL_FALSE, &_viewMat[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matP"), 1, GL_FALSE, &_projMat[0][0]);
-    glUniform1i(glGetUniformLocation(_program, "u_volumeTexture"), 0);
-
-    // Draw!
-    glBindVertexArray(m_meshVAO);                       // bind the VAO
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexVBO);  // do not forget to bind the index buffer AFTER !
-
-    glDrawElements(GL_TRIANGLES, m_numIndices, GL_UNSIGNED_INT, 0);
-
-    glBindVertexArray(m_defaultVAO);
-
-    glUseProgram(0);
-
-
-
-}
-
-
-void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex)
+void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue)
 {
     glUseProgram(_program);
 
@@ -423,6 +333,7 @@ void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex,
     glUniform1i(glGetUniformLocation(_program, "u_useGammaCorrec"), m_useGammaCorrec);
     glUniform1i(glGetUniformLocation(_program, "u_modeVR"), m_modeVR);
     glUniform1i(glGetUniformLocation(_program, "u_maxSteps"), m_maxSteps);
+    glUniform1f(glGetUniformLocation(_program, "u_isoValue"), (float)_isoValue / 255.0f);
 
     // Draw!
     glBindVertexArray(m_meshVAO);                       // bind the VAO
@@ -434,43 +345,6 @@ void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex,
 
     glUseProgram(0);
 }
-
-void DrawableMesh::drawRayCastReslice(GLuint _program, glm::mat4 _modelMat, glm::mat4 _viewMat, glm::mat4 _projMat, glm::mat4 _rotMat, glm::vec3 _camPos, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, float _d)
-{
-    glUseProgram(_program);
-
-    // bind textures
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_3D, _3dTex);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _frontTex);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, _backTex);
-
-    // set uniforms
-    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matM"), 1, GL_FALSE, &_modelMat[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matV"), 1, GL_FALSE, &_viewMat[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matP"), 1, GL_FALSE, &_projMat[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matRot"), 1, GL_FALSE, &_rotMat[0][0]);
-    glUniform3fv(glGetUniformLocation(_program, "u_camPos"), 1, &_camPos[0]);
-    glUniform1i(glGetUniformLocation(_program, "u_volumeTexture"), 0);
-    glUniform1i(glGetUniformLocation(_program, "u_frontFaceTexture"), 1);
-    glUniform1i(glGetUniformLocation(_program, "u_backFaceTexture"), 2);
-    glUniform1i(glGetUniformLocation(_program, "u_useGammaCorrec"), m_useGammaCorrec);
-    glUniform1f(glGetUniformLocation(_program, "u_dPlan"), _d);
-
-
-    // Draw!
-    glBindVertexArray(m_meshVAO);                       // bind the VAO
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexVBO);  // do not forget to bind the index buffer AFTER !
-
-    glDrawElements(GL_TRIANGLES, m_numIndices, GL_UNSIGNED_INT, 0);
-
-    glBindVertexArray(m_defaultVAO);
-
-    glUseProgram(0);
-}
-
 
 void DrawableMesh::drawSlice(GLuint _program, glm::mat4 _modelMat, glm::mat4 _viewMat, glm::mat4 _projMat, glm::mat4 _tex3dMat, GLuint _3dTex, GLuint _1dTex)
 {

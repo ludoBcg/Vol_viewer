@@ -94,7 +94,6 @@ class DrawableMesh
         */
         void createScreenQuadVAO();
 
-        void createCutPlaneVAO();
 
         /*!
         * \fn createUnitCubeVAO
@@ -141,11 +140,7 @@ class DrawableMesh
         * \param _backTex : 2D texture with back face color rendering of bounding geometry
         * \param _1dTex : 1D texture for transfer function (i.e., lookup table)
         */
-        void drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex);
-
-        void drawRayCastReslice(GLuint _program, glm::mat4 _modelMat, glm::mat4 _viewMat, glm::mat4 _projMat, glm::mat4 _rotMat, glm::vec3 _camPos, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, float _d);
-
-        void drawCutPlane(GLuint _program, glm::mat4 _modelMat, glm::mat4 _modelMat2, glm::mat4 _viewMat, glm::mat4 _projMat, GLuint _3dTex);
+        void drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue);
 
         /*!
         * \fn drawSlice
