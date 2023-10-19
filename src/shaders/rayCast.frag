@@ -16,6 +16,7 @@ uniform bool u_useGammaCorrec;
 uniform int u_modeVR; // MIP = 1, alpha blending = 2, isosurface = 3
 uniform int u_maxSteps;
 uniform float u_isoValue;
+uniform mat4 u_matMVP;
 
 
 in vec2 v_texcoord;
@@ -94,6 +95,7 @@ void main()
     vec4 color = vec4(0.0);
 	
 	float u_stepSize = 1.732/float(u_maxSteps); //1.732 = sqrt(3) = diag length
+	u_stepSize = 0.005f;
 
     vec4 frontFace = texture(u_frontFaceTexture, v_texcoord);
     vec4 backFace = texture(u_backFaceTexture, v_texcoord);
@@ -103,8 +105,8 @@ void main()
     vec3 rayStart = frontFace.xyz;
     vec3 rayStop = backFace.xyz;
     vec3 rayDir = normalize(rayStop - rayStart);
-    int numSteps = int(min(u_maxSteps, length(rayStart - rayStop) / u_stepSize));
-	
+    //int numSteps = int(min(u_maxSteps, length(rayStart - rayStop) / u_stepSize));
+	int numSteps = int(length(rayStart - rayStop) / u_stepSize );
 
     vec4 accum = vec4(0.0);
     vec3 pos = rayStart;
@@ -122,13 +124,13 @@ void main()
 				pos = interval_bisection(pos, rayDir, u_stepSize);
 
 				vec3 normal = normalize(-imageGradient(u_volumeTexture, pos));
-				//vec3 N = normalize(mat3(u_mv) * normal);
-				vec3 N = normalize(normal);
+				vec3 N = normalize(mat3(u_matMVP) * normal);
+				//vec3 N = normalize(normal);
 				vec3 L = vec3(0.0, 0.0, 1.0);
 				vec3 diffuseColor = N * 0.5 + 0.5;
-				//accum.rgb = vec3(0.95, 0.95, 0.95) * max(0.0, dot(N, L));
+				accum.rgb = vec3(0.95, 0.95, 0.95) * max(0.0, dot(N, L));
 				//accum.rgb = vec3(intensity, intensity, intensity);
-				accum.rgb = diffuseColor;
+				//accum.rgb = diffuseColor;
 				accum.a = 1.0;
 				break;
 			}
