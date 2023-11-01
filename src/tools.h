@@ -695,5 +695,4 @@ void buildScreenFBOandTex(GLuint *_screenFBO, GLuint *_screenTex, unsigned int _
 }
 
 
-
 #endif // TOOLS_H

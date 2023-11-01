@@ -17,11 +17,22 @@ uniform int u_modeVR; // MIP = 1, alpha blending = 2, isosurface = 3
 uniform int u_maxSteps;
 uniform float u_isoValue;
 uniform mat4 u_matMVP;
+uniform int u_useAO;
+
 
 
 in vec2 v_texcoord;
 
 out vec4 frag_color;
+
+
+
+float aoFactor(vec3 pos, vec3 normal) 
+{
+	// TODO
+	return 1;
+}
+
 
 // Performs interval bisection that can be used to improve the
 // accuracy of iso-surface detection. Based on a CG example in the
@@ -118,20 +129,23 @@ void main()
 
 			if (intensity >= u_isoValue)
 			{
-				//improve accuracy of iso surface position
-				pos = interval_bisection(pos, rayDir, u_stepSize);
-
-				vec3 normal = normalize(-imageGradient(u_volumeTexture, pos));
-				vec3 N = normalize(mat3(u_matMVP) * normal);
-				vec3 L = vec3(0.0, 0.0, 1.0);
-				vec3 diffuseColor = vec3(0.95, 0.95, 0.95) * max(0.0, dot(N, L));
-				vec3 ambientColor = vec3(0.1, 0.1, 0.1);
-				accum.rgb = diffuseColor + ambientColor;
-				accum.a = 1.0;
 				break;
 			}
 
 			pos += u_stepSize * rayDir;
+		}
+		if (intensity > u_isoValue)
+		{
+			//improve accuracy of iso surface position
+			pos = interval_bisection(pos, rayDir, u_stepSize);
+
+			vec3 normal = normalize(-imageGradient(u_volumeTexture, pos));
+			vec3 N = normalize(mat3(u_matMVP) * normal);
+			vec3 L = vec3(0.0, 0.0, 1.0);
+			vec3 diffuseColor = vec3(0.9, 0.9, 0.9) * max(0.0, dot(N, L));
+			vec3 ambientColor = vec3(0.1, 0.1, 0.1);
+			accum.rgb = diffuseColor + ambientColor;
+			accum.a = 1.0;
 		}
 	}
 	else // MIP or alpha blending

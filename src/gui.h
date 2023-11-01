@@ -31,6 +31,7 @@ struct UI {
     glm::vec3 backColor = glm::vec3(0.5f, 0.5f, 0.5f); /*!< background color */
     bool isBackgroundWhite = false;     /*!< background color flag */
     bool isGammaCorrecOn = false;     /*!< Gamma correction flag */
+    bool isAOOn = false;
     bool showFrontTex = false;        /*! Show front face texture of the bounding geometry*/
     bool showBackTex = false;         /*! Show back face texture of the bounding geometry*/
     bool singleView = true;          /*! Split screen or not*/
@@ -130,8 +131,15 @@ void GUI( UI& _ui,
                         if (ImGui::RadioButton("isosurface", &_ui.VRmode, 3))
                             _drawScreenQuad.setModeVR(3);
 
-                        if(_ui.VRmode == 3)
+                        if (_ui.VRmode == 3)
+                        {
                             ImGui::SliderInt("Iso value", &_ui.isoValue, 0, 255);
+
+                            if (ImGui::Checkbox("AO ", &_ui.isAOOn))
+                            {
+                                _drawScreenQuad.setUseAOFlag(_ui.isAOOn);
+                            }
+                        }
                     }
                 }
 

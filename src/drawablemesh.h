@@ -19,11 +19,11 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <random>
 
 // Include GLM
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
-
 
 
 // The attribute locations used in the vertex shader
@@ -75,6 +75,8 @@ class DrawableMesh
         inline void setModeVR(int _modeVR) { m_modeVR = _modeVR; }
         /*! \fn setMaxSteps */
         inline void setMaxSteps(int _maxSteps) { m_maxSteps = _maxSteps; }
+        /*! \fn setUseAOFlag */
+        inline void setUseAOFlag(bool _useAO) { m_useAO = _useAO; }
 
         /*! \fn getUseGammaCorrecFlag */
         inline bool getUseGammaCorrecFlag() { return m_useGammaCorrec; }
@@ -82,6 +84,8 @@ class DrawableMesh
         inline bool getModeVR() { return m_modeVR; }
         /*! \fn getMaxSteps */
         inline bool getMaxSteps() { return m_maxSteps; }
+        /*! \fn getUseAOFlag */
+        inline bool getUseAOFlag() { return m_useAO; }
 
 
         /*------------------------------------------------------------------------------------------------------------+
@@ -186,6 +190,7 @@ class DrawableMesh
         bool m_tex3dProvided;       /*!< flag to indicate if 3D texture coords are available or not */
         bool m_indexProvided;       /*!< flag to indicate if indices are available or not */
 
+        bool m_useAO;
 
         /*------------------------------------------------------------------------------------------------------------+
         |                                                   MISC                                                      |

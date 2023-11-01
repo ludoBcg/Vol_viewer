@@ -11,6 +11,7 @@
 #include "drawablemesh.h"
 
 
+
 DrawableMesh::DrawableMesh()
 {
     setUseGammaCorrecFlag(false);
@@ -22,6 +23,7 @@ DrawableMesh::DrawableMesh()
     m_uvProvided = false;
     m_tex3dProvided = false;
     m_indexProvided = false;
+
 }
 
 
@@ -321,6 +323,7 @@ void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex,
     glUniform1i(glGetUniformLocation(_program, "u_maxSteps"), m_maxSteps);
     glUniform1f(glGetUniformLocation(_program, "u_isoValue"), (float)_isoValue / 255.0f);
     glUniformMatrix4fv(glGetUniformLocation(_program, "u_matMVP"), 1, GL_FALSE, &_mvpMat[0][0]);
+    glUniform1i(glGetUniformLocation(_program, "u_useAO"), m_useAO);
 
 
     // Draw!
