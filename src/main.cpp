@@ -67,6 +67,7 @@ GLuint m_lookupTex;             /*!< TF 1D texture */
 // shader programs
 GLuint m_programBoundingGeom;   /*!< handle of the program object (i.e. shaders) for bounding geometry rendering */
 GLuint m_programRayCast;        /*!< handle of the program object (i.e. shaders) for ray-casting rendering */
+GLuint m_programIsoSurf;        /*!< handle of the program object (i.e. shaders) for ray-casting rendering */
 GLuint m_programSlice;          /*!< handle of the program object (i.e. shaders) for slice rendering */
 GLuint m_programQuad;           /*!< handle of the program object (i.e. shaders) for screen quad rendering */
 
@@ -173,6 +174,7 @@ void initialize()
     // init shaders
     m_programBoundingGeom = loadShaderProgram(shaderDir + "boundingGeom.vert", shaderDir + "boundingGeom.frag");// renders 3D geometry with (XYZ) as colors, and writes results into positionTex
     m_programRayCast = loadShaderProgram(shaderDir + "rayCast.vert", shaderDir + "rayCast.frag");               // Performs ray-casting 
+    m_programIsoSurf = loadShaderProgram(shaderDir + "isoSurf.vert", shaderDir + "isoSurf.frag");               // Performs ray-casting 
     m_programSlice = loadShaderProgram(shaderDir + "slice.vert", shaderDir + "slice.frag");                     // Render textured slices 
     m_programQuad = loadShaderProgram(shaderDir + "screenQuad.vert", shaderDir + "screenQuad.frag");                  // renders screenQuad with texture one
     
@@ -377,6 +379,8 @@ void renderRayCast()
         m_drawScreenQuad->drawScreenQuad(m_programQuad, m_frontPosTex, false);
     else if (m_ui.showBackTex)
         m_drawScreenQuad->drawScreenQuad(m_programQuad, m_backPosTex, false);
+    else if(m_ui.VRmode == 3)
+        m_drawScreenQuad->drawIsoSurf(m_programIsoSurf, m_volTex, m_frontPosTex, m_backPosTex, m_lookupTex, m_ui.isoValue, projMat * viewMat * modelMat);
     else
         m_drawScreenQuad->drawRayCast(m_programRayCast, m_volTex, m_frontPosTex, m_backPosTex, m_lookupTex, m_ui.isoValue, projMat * viewMat * modelMat);
 
@@ -570,6 +574,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
         // reload shaders
         m_programBoundingGeom = loadShaderProgram(shaderDir + "boundingGeom.vert", shaderDir + "boundingGeom.frag");// renders 3D geometry with (XYZ) as colors, and writes results into positionTex
         m_programRayCast = loadShaderProgram(shaderDir + "rayCast.vert", shaderDir + "rayCast.frag");               // Performs ray-casting 
+        m_programIsoSurf = loadShaderProgram(shaderDir + "isoSurf.vert", shaderDir + "isoSurf.frag");               // Performs ray-casting 
         m_programSlice = loadShaderProgram(shaderDir + "slice.vert", shaderDir + "slice.frag");                     // Render textured slices 
         m_programQuad = loadShaderProgram(shaderDir + "screenQuad.vert", shaderDir + "screenQuad.frag");
     }

@@ -321,6 +321,38 @@ void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex,
     glUniform1i(glGetUniformLocation(_program, "u_useGammaCorrec"), m_useGammaCorrec);
     glUniform1i(glGetUniformLocation(_program, "u_modeVR"), m_modeVR);
     glUniform1i(glGetUniformLocation(_program, "u_maxSteps"), m_maxSteps);
+    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matMVP"), 1, GL_FALSE, &_mvpMat[0][0]);
+
+
+    // Draw!
+    glBindVertexArray(m_meshVAO);                       // bind the VAO
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexVBO);  // do not forget to bind the index buffer AFTER !
+
+    glDrawElements(GL_TRIANGLES, m_numIndices, GL_UNSIGNED_INT, 0);
+
+    glBindVertexArray(m_defaultVAO);
+
+    glUseProgram(0);
+}
+
+void DrawableMesh::drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue, glm::mat4 _mvpMat)
+{
+    glUseProgram(_program);
+
+    // bind textures
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_3D, _3dTex);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, _frontTex);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, _backTex);
+
+    // set uniforms
+    glUniform1i(glGetUniformLocation(_program, "u_volumeTexture"), 0);
+    glUniform1i(glGetUniformLocation(_program, "u_frontFaceTexture"), 1);
+    glUniform1i(glGetUniformLocation(_program, "u_backFaceTexture"), 2);
+    glUniform1i(glGetUniformLocation(_program, "u_useGammaCorrec"), m_useGammaCorrec);
+    glUniform1i(glGetUniformLocation(_program, "u_maxSteps"), m_maxSteps);
     glUniform1f(glGetUniformLocation(_program, "u_isoValue"), (float)_isoValue / 255.0f);
     glUniformMatrix4fv(glGetUniformLocation(_program, "u_matMVP"), 1, GL_FALSE, &_mvpMat[0][0]);
     glUniform1i(glGetUniformLocation(_program, "u_useAO"), m_useAO);

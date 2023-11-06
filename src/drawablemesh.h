@@ -147,6 +147,17 @@ class DrawableMesh
         void drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue, glm::mat4 _mvpMat);
 
         /*!
+        * \fn drawIsoSurf
+        * \brief Performs ray-casting for iso-surface rendering
+        * \param _program : shader program
+        * \param _3dTex : 3D texture with volume data
+        * \param _frontTex : 2D texture with front face color rendering of bounding geometry
+        * \param _backTex : 2D texture with back face color rendering of bounding geometry
+        * \param _1dTex : 1D texture for transfer function (i.e., lookup table)
+        */
+        void drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue, glm::mat4 _mvpMat);
+
+        /*!
         * \fn drawSlice
         * \brief Draw slice-quad with 3D texture mapping
         * \param _program : shader program
