@@ -335,6 +335,7 @@ void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex,
     glUseProgram(0);
 }
 
+
 void DrawableMesh::drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue, glm::mat4 _mvpMat)
 {
     glUseProgram(_program);
@@ -368,6 +369,7 @@ void DrawableMesh::drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex,
 
     glUseProgram(0);
 }
+
 
 void DrawableMesh::drawSlice(GLuint _program, glm::mat4 _modelMat, glm::mat4 _viewMat, glm::mat4 _projMat, glm::mat4 _tex3dMat, GLuint _3dTex, GLuint _1dTex)
 {

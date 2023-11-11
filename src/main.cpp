@@ -57,12 +57,16 @@ std::shared_ptr<VolumeImg> m_volume;
 // FBOs
 GLuint m_frontFaceFBO;          /*!< FBO for front face rendering of bounding geometry: renders fragment position coords as rgb colors m_frontPos */
 GLuint m_backFaceFBO;           /*!< FBO for back face rendering of bounding geometry: renders fragment position coords as rgb colors m_frontPos */
+GLuint m_gBufferFBO;            /*!< FBO for G-buffer: renders fragment position and normals coords as rgb colors into m_gPosition and m_gNormal */
 
 // Textures
 GLuint m_frontPosTex;           /*!< Front face bounding geometry position screen-texture */
 GLuint m_backPosTex;            /*!< Back face bounding geometry position screen-texture */
 GLuint m_volTex;                /*!< Volume 3D texture */
 GLuint m_lookupTex;             /*!< TF 1D texture */
+GLuint m_gPosition;             /*!< G-buffer position screen-texture */
+GLuint m_gNormal;               /*!< G-buffer normal screen-texture */
+GLuint m_gColor;                /*!< G-buffer color screen-textures */
 
 // shader programs
 GLuint m_programBoundingGeom;   /*!< handle of the program object (i.e. shaders) for bounding geometry rendering */
@@ -176,12 +180,16 @@ void initialize()
     m_programRayCast = loadShaderProgram(shaderDir + "rayCast.vert", shaderDir + "rayCast.frag");               // Performs ray-casting 
     m_programIsoSurf = loadShaderProgram(shaderDir + "isoSurf.vert", shaderDir + "isoSurf.frag");               // Performs ray-casting 
     m_programSlice = loadShaderProgram(shaderDir + "slice.vert", shaderDir + "slice.frag");                     // Render textured slices 
-    m_programQuad = loadShaderProgram(shaderDir + "screenQuad.vert", shaderDir + "screenQuad.frag");                  // renders screenQuad with texture one
+    m_programQuad = loadShaderProgram(shaderDir + "screenQuad.vert", shaderDir + "screenQuad.frag");            // Renders screenQuad with texture one
+
     
 
     // build FBO and texture output for front and back face rendering of bounding geometry
     buildScreenFBOandTex(&m_frontFaceFBO, &m_frontPosTex, TEX_WIDTH, TEX_HEIGHT);
     buildScreenFBOandTex(&m_backFaceFBO, &m_backPosTex, TEX_WIDTH, TEX_HEIGHT);
+    // build G-buffer FBO and textures
+    buildGbuffFBOandTex(&m_gBufferFBO, &m_gPosition, &m_gNormal, &m_gColor, TEX_WIDTH, TEX_HEIGHT);
+    
 
     // build 3D texture from volume and FBO for raycasting
     build3DTex(&m_volTex, m_volume.get());
@@ -344,6 +352,34 @@ void renderBoundingGeom()
 
 void renderRayCast()
 {
+    if (m_ui.VRmode == 3)
+    {
+        // G-buffer for isosurface rendering (WIP)
+
+        // bind dedicated FBO
+        glBindFramebuffer(GL_FRAMEBUFFER, m_gBufferFBO);
+        // resize viewport to output texture dimension
+        glViewport(0, 0, TEX_WIDTH, TEX_HEIGHT);
+        // switch background to black to make sure empty fragments are not processed
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0);
+        // Clear window with background color
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // get matrices
+        glm::mat4 modelMat = m_modelMatrix * m_volume->volumeComputeModelMatrix();
+        glm::mat4 viewMat = m_camera3D.getViewMatrix();
+        glm::mat4 projMat = m_camera3D.getProjectionMatrix();
+        // apply translation after MVP for panning
+        projMat = glm::translate(glm::mat4(1.0), m_translat3D) * projMat;
+
+        m_drawScreenQuad->drawIsoSurf(m_programIsoSurf, m_volTex, m_frontPosTex, m_backPosTex, m_lookupTex, m_ui.isoValue, projMat * viewMat * modelMat);
+    
+        if (m_ui.isBackgroundWhite)
+            glClearColor(1.0f, 1.0f, 1.0f, 0.0);
+        else
+            glClearColor(m_ui.backColor.r, m_ui.backColor.g, m_ui.backColor.b, 0.0f);
+    }
+
     // Bind default framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -379,8 +415,11 @@ void renderRayCast()
         m_drawScreenQuad->drawScreenQuad(m_programQuad, m_frontPosTex, false);
     else if (m_ui.showBackTex)
         m_drawScreenQuad->drawScreenQuad(m_programQuad, m_backPosTex, false);
-    else if(m_ui.VRmode == 3)
-        m_drawScreenQuad->drawIsoSurf(m_programIsoSurf, m_volTex, m_frontPosTex, m_backPosTex, m_lookupTex, m_ui.isoValue, projMat * viewMat * modelMat);
+    else if (m_ui.VRmode == 3)
+    {
+        //m_drawScreenQuad->drawIsoSurf(m_programIsoSurf, m_volTex, m_frontPosTex, m_backPosTex, m_lookupTex, m_ui.isoValue, projMat * viewMat * modelMat);
+        m_drawScreenQuad->drawScreenQuad(m_programQuad, m_gColor, false);
+    }
     else
         m_drawScreenQuad->drawRayCast(m_programRayCast, m_volTex, m_frontPosTex, m_backPosTex, m_lookupTex, m_ui.isoValue, projMat * viewMat * modelMat);
 

@@ -1,9 +1,14 @@
 // Fragment shader
-#version 150
+#version 330
 
 #define RAYCAST_MODE_MIP 0
 #define RAYCAST_MODE_COMPOSITE 1
 #define RAYCAST_MODE_ISOSURFACE 2
+
+// Ouput data
+layout(location = 0) out vec3 gPosition;
+layout(location = 1) out vec3 gNormal;
+layout(location = 2) out vec3 gColor;
 
 
 uniform sampler3D u_volumeTexture;
@@ -113,8 +118,12 @@ void main()
     vec3 rayDir = normalize(rayStop - rayStart);
 	int numSteps = int(length(rayStart - rayStop) / u_stepSize );
 
+	vec3 N = vec3(0.0, 0.0, 0.0);
+	vec3 L = vec3(0.0, 0.0, 1.0);
+
     vec3 pos = rayStart;
     float intensity = 0.0;
+	gPosition = vec3(0.0);
 
 
 	for (int i = 0; i < numSteps; ++i) 
@@ -134,12 +143,13 @@ void main()
 		pos = interval_bisection(pos, rayDir, u_stepSize);
 
 		vec3 normal = normalize(-imageGradient(u_volumeTexture, pos));
-		vec3 N = normalize(mat3(u_matMVP) * normal);
-		vec3 L = vec3(0.0, 0.0, 1.0);
+		N = normalize(mat3(u_matMVP) * normal);
 		vec3 diffuseColor = vec3(0.9, 0.9, 0.9) * max(0.0, dot(N, L));
 		vec3 ambientColor = vec3(0.1, 0.1, 0.1);
 		color.rgb = diffuseColor + ambientColor;
 		color.a = 1.0;
+
+		gPosition = pos;
 	}
 
 
@@ -147,4 +157,8 @@ void main()
 		color.rgb = linearToGamma(color.rgb);
 	
     frag_color = color;
+
+
+	gColor = color.rgb;
+	gNormal = N;
 }

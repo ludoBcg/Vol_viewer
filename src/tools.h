@@ -695,4 +695,69 @@ void buildScreenFBOandTex(GLuint *_screenFBO, GLuint *_screenTex, unsigned int _
 }
 
 
+/*!
+* \fn buildGbuffFBOandTex
+* \brief Generate a FBO and attach textures to 2 color outputs (used for G-buffer textures generation)
+*        Use a renderbuffer to handle depth buffering
+* \param _gFBO : pointer to id of FBO to generate
+* \param _gPosition : pointer to id of texture to generate for 1st color output
+* \param _gNormal : pointer to id of texture to generate for 2nd color output
+* \param _gColor : pointer to id of texture to generate for 3rd color output
+* \param _texWidth : texture width
+* \param _texHeight : texture height
+*/
+void buildGbuffFBOandTex(GLuint* _gFBO, GLuint* _gPosition, GLuint* _gNormal, GLuint* _gColor, unsigned int _texWidth, unsigned int _texHeight)
+{
+    // generate FBO 
+    glGenFramebuffers(1, _gFBO);
+
+    // 1st texture (position buffer)
+    glGenTextures(1, _gPosition);
+    glBindTexture(GL_TEXTURE_2D, *_gPosition);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _texWidth, _texHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    // 2nd texture (normal buffer)
+    glGenTextures(1, _gNormal);
+    glBindTexture(GL_TEXTURE_2D, *_gNormal);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _texWidth, _texHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    // 3rd texture (color buffer)
+    glGenTextures(1, _gColor);
+    glBindTexture(GL_TEXTURE_2D, *_gColor);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _texWidth, _texHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    // bind FBO
+    glBindFramebuffer(GL_FRAMEBUFFER, *_gFBO);
+
+    // attach textures to different color outputs of the FBO
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, *_gPosition, 0);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, *_gNormal, 0);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, *_gColor, 0);
+
+    // handle multiple color attachments
+    GLenum attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+    glDrawBuffers(3, attachments);
+
+    // create and attach depth buffer (renderbuffer)
+    unsigned int rboGbuff;
+    glGenRenderbuffers(1, &rboGbuff);
+    glBindRenderbuffer(GL_RENDERBUFFER, rboGbuff);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, _texWidth, _texHeight);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboGbuff);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cerr << "[ERROR] buildGbuffFBOandTex(): G-buffer FBO incomplete" << std::endl;
+    }
+
+    // Bind default framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+
 #endif // TOOLS_H
