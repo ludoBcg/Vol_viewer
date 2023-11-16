@@ -94,6 +94,8 @@ bool m_startPanningA = false;           /*! flag to indicate if panning is activ
 bool m_startPanningC = false;           /*! flag to indicate if panning is activated in coronal view */
 bool m_startPanningS = false;           /*! flag to indicate if panning is activated in sagittal view */
 glm::vec2 m_prevMousePos(0.0f);
+std::vector<glm::vec3> m_randKernel;
+GLuint m_noiseTex;
 
 std::vector<glm::ivec2> m_viewportPos;  /*! Store position (i.e., origin) of each viewport (use multiple viewport for split-screen) */
 std::vector<glm::ivec2> m_viewportDim;  /*! Store dimension (i.e., resolution) of each viewport (use multiple viewport for split-screen) */
@@ -196,6 +198,12 @@ void initialize()
 
     // build transfer function
     build1DTex(&m_lookupTex, 100, 80);
+
+    buildRandKernel(m_randKernel);
+    buildKernelRot(m_noiseTex);
+
+    m_drawScreenQuad->setRandKernel(m_randKernel);
+    m_drawScreenQuad->setNoiseTex(m_noiseTex);
 
 }
 

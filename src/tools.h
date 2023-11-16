@@ -760,4 +760,62 @@ void buildGbuffFBOandTex(GLuint* _gFBO, GLuint* _gPosition, GLuint* _gNormal, GL
 }
 
 
+float lerp(float a, float b, float f)
+{
+    return a + f * (b - a);
+}
+
+void buildRandKernel(std::vector<glm::vec3>& _kernel)
+{
+    // generate sample kernel 
+    std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // random floats between 0.0 and 1.0
+    std::default_random_engine generator;
+    _kernel.clear();
+
+    int i = 0;
+    while (i < 64)
+    {
+        glm::vec3 sample(randomFloats(generator) * 2.0 - 1.0,
+                         randomFloats(generator) * 2.0 - 1.0,
+                         randomFloats(generator));
+        if (glm::length(sample) <= 1.0)
+        {
+            sample = glm::normalize(sample);
+            sample *= randomFloats(generator);
+            float scale = (float)i / 64.0f;
+
+            // scale samples s.t. they're more aligned to center of kernel
+            scale = lerp(0.1f, 1.0f, scale * scale);
+            _kernel.push_back(sample);
+            i++;
+        }
+    }
+}
+
+void buildKernelRot(GLuint& _noiseTex)
+{
+    std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // random floats between 0.0 and 1.0
+    std::default_random_engine generator;
+
+    //create a 4x4 array of random rotation vectors oriented around the tangent-space surface normal
+    std::vector<glm::vec3> ssaoNoise;
+    for (unsigned int i = 0; i < 16; i++)
+    {
+        glm::vec3 noise(randomFloats(generator) * 2.0 - 1.0,
+                        randomFloats(generator) * 2.0 - 1.0,
+                        0.0f);
+
+        ssaoNoise.push_back(noise);
+    }
+
+    glGenTextures(1, &_noiseTex);
+    glBindTexture(GL_TEXTURE_2D, _noiseTex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+}
+
+
 #endif // TOOLS_H

@@ -77,6 +77,10 @@ class DrawableMesh
         inline void setMaxSteps(int _maxSteps) { m_maxSteps = _maxSteps; }
         /*! \fn setUseAOFlag */
         inline void setUseAOFlag(bool _useAO) { m_useAO = _useAO; }
+        /*! \fn setRandKernel */
+        inline void setRandKernel(std::vector<glm::vec3> _randKernel) { m_randKernel = _randKernel; }
+        /*! \fn setNoiseTex */
+        inline void setNoiseTex(GLuint _noiseTex) { m_noiseTex = _noiseTex; }
 
         /*! \fn getUseGammaCorrecFlag */
         inline bool getUseGammaCorrecFlag() { return m_useGammaCorrec; }
@@ -202,6 +206,8 @@ class DrawableMesh
         bool m_indexProvided;       /*!< flag to indicate if indices are available or not */
 
         bool m_useAO;
+        GLuint m_noiseTex;          /*!< index of noise texture */
+        std::vector<glm::vec3> m_randKernel;
 
         /*------------------------------------------------------------------------------------------------------------+
         |                                                   MISC                                                      |
