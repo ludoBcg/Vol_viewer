@@ -137,7 +137,7 @@ void main()
 
 		pos += u_stepSize * rayDir;
 	}
-	if (intensity > u_isoValue)
+	if (intensity >= u_isoValue)
 	{
 		//improve accuracy of iso surface position
 		pos = interval_bisection(pos, rayDir, u_stepSize);

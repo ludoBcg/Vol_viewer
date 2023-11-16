@@ -360,8 +360,7 @@ void renderRayCast()
         glBindFramebuffer(GL_FRAMEBUFFER, m_gBufferFBO);
         // resize viewport to output texture dimension
         glViewport(0, 0, TEX_WIDTH, TEX_HEIGHT);
-        // switch background to black to make sure empty fragments are not processed
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0);
+        glClearColor(m_ui.backColor.r, m_ui.backColor.g, m_ui.backColor.b, 0.0f);
         // Clear window with background color
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -857,6 +856,7 @@ int main(int argc, char** argv)
     
     std::cout << std::endl
               << "OpenGL version: " << glGetString(GL_VERSION) << std::endl
+              << "GLSL version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl
               << "Vendor: " << glGetString(GL_VENDOR) << std::endl;
 
     glGenVertexArrays(1, &m_defaultVAO);
@@ -890,8 +890,6 @@ int main(int argc, char** argv)
         // Swap between front and back buffer
         glfwSwapBuffers(m_window);
     }
-
-    //m_session->stopScheme(); //@comment
 
     // Cleanup imGui
     ImGui_ImplOpenGL3_Shutdown();
