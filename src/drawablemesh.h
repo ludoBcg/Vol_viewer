@@ -139,6 +139,10 @@ class DrawableMesh
         */
         void drawScreenQuad(GLuint _program, GLuint _tex, bool _isBlurOn, bool _isGaussH = true, int _filterWidth = 0 );
 
+        void drawScreenSpace(GLuint _program, GLuint _colTex, GLuint _normTex, GLuint _posTex, 
+                             glm::mat4 _modelMat, glm::mat4 _viewMat, glm::mat4 _projMat);
+
+
         /*!
         * \fn drawRayCast
         * \brief Performs ray-casting
@@ -159,7 +163,8 @@ class DrawableMesh
         * \param _backTex : 2D texture with back face color rendering of bounding geometry
         * \param _1dTex : 1D texture for transfer function (i.e., lookup table)
         */
-        void drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue, glm::mat4 _mvpMat);
+        void drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue,
+            glm::mat4 _modelMat, glm::mat4 _viewMat, glm::mat4 _projMat);
 
         /*!
         * \fn drawSlice
