@@ -5,10 +5,10 @@
 #define RAYCAST_MODE_COMPOSITE 1
 #define RAYCAST_MODE_ISOSURFACE 2
 
-// Ouput data
-layout(location = 0) out vec3 gPosition;
-layout(location = 1) out vec3 gNormal;
-layout(location = 2) out vec3 gColor;
+// Ouput data (G-buffer)
+layout(location = 0) out vec4 gPosition;
+layout(location = 1) out vec4 gNormal;
+layout(location = 2) out vec4 gColor;
 
 
 uniform sampler3D u_volumeTexture;
@@ -17,22 +17,14 @@ uniform sampler2D u_frontFaceTexture;
 uniform bool u_useGammaCorrec;
 uniform int u_maxSteps;
 uniform float u_isoValue;
-uniform mat4 u_matMVP;
-uniform int u_useAO;
-
+uniform mat4 u_matM;
+uniform mat4 u_matV;
+uniform mat4 u_matP;
 
 
 in vec2 v_texcoord;
 
 out vec4 frag_color;
-
-
-
-float aoFactor(vec3 pos, vec3 normal) 
-{
-	// TODO
-	return 1;
-}
 
 
 // Performs interval bisection that can be used to improve the
@@ -67,6 +59,7 @@ vec3 interval_bisection(vec3 ray_position, vec3 ray_direction, float u_stepSize)
 }
 
 
+// 6-voxel neigborhood Sobel filter
 vec3 imageGradient(in sampler3D image, in vec3 pos)
 {
     vec3 grad = vec3(0.0);
@@ -80,15 +73,6 @@ vec3 imageGradient(in sampler3D image, in vec3 pos)
     return grad;
 }
 
-
-vec4 TF(in float intensity)
-{ 
-    vec4 color;
-    color.rgb = mix(vec3(1.0, 0.25, 0.0), vec3(1.0, 1.0, 1.0), intensity);
-    color.a = clamp(1.0 * intensity, 0.0, 1.0);
-
-    return color;
-}
 
 vec3 gammaToLinear(in vec3 color)
 {
@@ -104,8 +88,13 @@ vec3 linearToGamma(in vec3 color)
 
 void main()
 {
+	// init B-buffer values to zero
+	gPosition = vec4(0.0);
+	gColor = vec4(0.0);
+	gNormal = vec4(0.0);
+
     vec4 color = vec4(0.0);
-	
+	mat4 matMVP = u_matP * u_matV * u_matM;     // assemble model-viw-projection matrix
 	float u_stepSize = 1.732/float(u_maxSteps); //1.732 = sqrt(3) = diag length
 
     vec4 frontFace = texture(u_frontFaceTexture, v_texcoord);
@@ -118,13 +107,13 @@ void main()
     vec3 rayDir = normalize(rayStop - rayStart);
 	int numSteps = int(length(rayStart - rayStop) / u_stepSize );
 
-	vec3 N = vec3(0.0, 0.0, 0.0);
-	vec3 L = vec3(0.0, 0.0, 1.0);
+	//vec4 Nreturn = vec4(0.0, 0.0, 0.0, 1.0); // normal to write in output texture
+	//vec4 Preturn = vec4(0.0, 0.0, 0.0, 1.0); // position to write in output texture
+	vec3 L = vec3(0.0, 0.0, 1.0);            // light vector
+
 
     vec3 pos = rayStart;
     float intensity = 0.0;
-	gPosition = vec3(0.0);
-
 
 	for (int i = 0; i < numSteps; ++i) 
 	{
@@ -137,28 +126,41 @@ void main()
 
 		pos += u_stepSize * rayDir;
 	}
+
+	// shading of surface voxel
 	if (intensity >= u_isoValue)
 	{
 		//improve accuracy of iso surface position
 		pos = interval_bisection(pos, rayDir, u_stepSize);
 
+		// normal vec in 3D texture space
 		vec3 normal = normalize(-imageGradient(u_volumeTexture, pos));
-		N = normalize(mat3(u_matMVP) * normal);
+		// normal in img space used for lighting
+		vec3 N = normalize(mat3(matMVP) * normal);
+		// normal in view space to write in B-buffer
+		vec4 Nreturn = normalize(mat4(u_matV * u_matM) * vec4(normal.xyz, 1.0));
+		
+		// Blinn-Phong illumination
 		vec3 diffuseColor = vec3(0.9, 0.9, 0.9) * max(0.0, dot(N, L));
 		vec3 ambientColor = vec3(0.1, 0.1, 0.1);
 		color.rgb = diffuseColor + ambientColor;
 		color.a = 1.0;
 
-		gPosition = pos;
+		// write model space position coords into G-buffer
+		vec4 Preturn = u_matM * vec4(pos.rgb, 1.0);
+		gPosition = vec4(Preturn.rgb, 1.0);
+
+		// write normal into G-buffer
+		gNormal = vec4(Nreturn.xyz, 1.0);
+
 	}
 
 
 	if(u_useGammaCorrec)
 		color.rgb = linearToGamma(color.rgb);
 	
+	// write final color into G-buffer
+	gColor = vec4(color.rgb, 1.0);
+
     frag_color = color;
-
-
-	gColor = color.rgb;
-	gNormal = N;
 }
