@@ -248,16 +248,16 @@ void DrawableMesh::createSliceVAO(unsigned int _orientation)
 }
 
 
-void DrawableMesh::drawBoundingGeom(GLuint _program, glm::mat4 _modelMat, glm::mat4 _viewMat, glm::mat4 _projMat)
+void DrawableMesh::drawBoundingGeom(GLuint _program, MVPmatrices _mvpMatrices)
 {
     // Activate program
     glUseProgram(_program);
 
 
     // Pass uniforms
-    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matM"), 1, GL_FALSE, &_modelMat[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matV"), 1, GL_FALSE, &_viewMat[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matP"), 1, GL_FALSE, &_projMat[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matM"), 1, GL_FALSE, &_mvpMatrices.modelMat[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matV"), 1, GL_FALSE, &_mvpMatrices.viewMat[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matP"), 1, GL_FALSE, &_mvpMatrices.projMat[0][0]);
 
     // Draw!
     glBindVertexArray(m_meshVAO);                       // bind the VAO
@@ -302,8 +302,7 @@ void DrawableMesh::drawScreenQuad(GLuint _program, GLuint _tex, bool _isBlurOn, 
 }
 
 
-void DrawableMesh::drawScreenSpace(GLuint _program, GLuint _colTex, GLuint _normTex, GLuint _posTex,
-                                   glm::mat4 _modelMat, glm::mat4 _viewMat, glm::mat4 _projMat)
+void DrawableMesh::drawDeferred(GLuint _program, Gbuffer _gBufferTex, MVPmatrices _mvpMatrices, glm::vec2 _screenDims)
 {
 
     // Activate program
@@ -311,11 +310,11 @@ void DrawableMesh::drawScreenSpace(GLuint _program, GLuint _colTex, GLuint _norm
 
     // bind textures
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, _colTex);
+    glBindTexture(GL_TEXTURE_2D, _gBufferTex.colTex);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _normTex);
+    glBindTexture(GL_TEXTURE_2D, _gBufferTex.normTex);
     glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, _posTex);
+    glBindTexture(GL_TEXTURE_2D, _gBufferTex.posTex);
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, m_noiseTex);
 
@@ -329,9 +328,11 @@ void DrawableMesh::drawScreenSpace(GLuint _program, GLuint _colTex, GLuint _norm
         glUniform3fv(glGetUniformLocation(_program, str.c_str()), 1, &myVec[0]);
     }
     glUniform1i(glGetUniformLocation(_program, "u_noiseTex"), 3);
-    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matM"), 1, GL_FALSE, &_modelMat[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matV"), 1, GL_FALSE, &_viewMat[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matP"), 1, GL_FALSE, &_projMat[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matM"), 1, GL_FALSE, &_mvpMatrices.modelMat[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matV"), 1, GL_FALSE, &_mvpMatrices.viewMat[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matP"), 1, GL_FALSE, &_mvpMatrices.projMat[0][0]);
+    glUniform1i(glGetUniformLocation(_program, "u_useAO"), m_useAO);
+    glUniform2fv(glGetUniformLocation(_program, "u_screenDims"), 1, &_screenDims[0]);
 
 
     glBindVertexArray(m_meshVAO);                       // bind the VAO
@@ -346,7 +347,7 @@ void DrawableMesh::drawScreenSpace(GLuint _program, GLuint _colTex, GLuint _norm
 }
 
 
-void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue, glm::mat4 _mvpMat)
+void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, glm::mat4 _mvpMat)
 {
     glUseProgram(_program);
 
@@ -380,8 +381,7 @@ void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex,
 }
 
 
-void DrawableMesh::drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue,
-    glm::mat4 _modelMat, glm::mat4 _viewMat, glm::mat4 _projMat)
+void DrawableMesh::drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue, MVPmatrices _mvpMatrices)
 {
     glUseProgram(_program);
 
@@ -400,10 +400,9 @@ void DrawableMesh::drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex,
     glUniform1i(glGetUniformLocation(_program, "u_useGammaCorrec"), m_useGammaCorrec);
     glUniform1i(glGetUniformLocation(_program, "u_maxSteps"), m_maxSteps);
     glUniform1f(glGetUniformLocation(_program, "u_isoValue"), (float)_isoValue / 255.0f);
-    glUniform1i(glGetUniformLocation(_program, "u_useAO"), m_useAO);
-    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matM"), 1, GL_FALSE, &_modelMat[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matV"), 1, GL_FALSE, &_viewMat[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matP"), 1, GL_FALSE, &_projMat[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matM"), 1, GL_FALSE, &_mvpMatrices.modelMat[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matV"), 1, GL_FALSE, &_mvpMatrices.viewMat[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matP"), 1, GL_FALSE, &_mvpMatrices.projMat[0][0]);
 
 
     // Draw!
@@ -418,7 +417,7 @@ void DrawableMesh::drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex,
 }
 
 
-void DrawableMesh::drawSlice(GLuint _program, glm::mat4 _modelMat, glm::mat4 _viewMat, glm::mat4 _projMat, glm::mat4 _tex3dMat, GLuint _3dTex, GLuint _1dTex)
+void DrawableMesh::drawSlice(GLuint _program, MVPmatrices _mvpMatrices, glm::mat4 _tex3dMat, GLuint _3dTex, GLuint _1dTex)
 {
     // Activate program
     glUseProgram(_program);
@@ -431,9 +430,9 @@ void DrawableMesh::drawSlice(GLuint _program, glm::mat4 _modelMat, glm::mat4 _vi
 
 
     // Pass uniforms
-    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matM"), 1, GL_FALSE, &_modelMat[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matV"), 1, GL_FALSE, &_viewMat[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matP"), 1, GL_FALSE, &_projMat[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matM"), 1, GL_FALSE, &_mvpMatrices.modelMat[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matV"), 1, GL_FALSE, &_mvpMatrices.viewMat[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(_program, "u_matP"), 1, GL_FALSE, &_mvpMatrices.projMat[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(_program, "u_matTex"), 1, GL_FALSE, &_tex3dMat[0][0]);
     glUniform1i(glGetUniformLocation(_program, "u_volumeTexture"), 0);
     glUniform1i(glGetUniformLocation(_program, "u_lookupTexture"), 1);

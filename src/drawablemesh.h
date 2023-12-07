@@ -36,6 +36,20 @@ enum AttributeLocation
     TEX3D = 4,
 };
 
+struct Gbuffer
+{
+    GLuint colTex;
+    GLuint normTex;
+    GLuint posTex;
+};
+
+struct MVPmatrices
+{
+    glm::mat4 modelMat; 
+    glm::mat4 viewMat; 
+    glm::mat4 projMat;
+};
+
 
 
 /*!
@@ -122,11 +136,9 @@ class DrawableMesh
         * \fn drawBoundingGeom
         * \brief Draw the content of the mesh VAO
         * \param _program : shader program
-        * \param _modelMat : model matrix
-        * \param _viewMat :camera view matrix
-        * \param _projMat :camera projection matrix
+        * \param _mvpMatrices : Model, View, and Projection matrices
         */
-        void drawBoundingGeom(GLuint _program, glm::mat4 _modelMat, glm::mat4 _viewMat, glm::mat4 _projMat);
+        void drawBoundingGeom(GLuint _program, MVPmatrices _mvpMatrices);
 
         /*!
         * \fn drawScreenQuad
@@ -139,8 +151,15 @@ class DrawableMesh
         */
         void drawScreenQuad(GLuint _program, GLuint _tex, bool _isBlurOn, bool _isGaussH = true, int _filterWidth = 0 );
 
-        void drawScreenSpace(GLuint _program, GLuint _colTex, GLuint _normTex, GLuint _posTex, 
-                             glm::mat4 _modelMat, glm::mat4 _viewMat, glm::mat4 _projMat);
+        /*!
+        * \fn drawDeferred
+        * \brief Draw the screen quad, assemble G-buffer textures
+        * \param _program : shader program
+        * \param _gBufferTex : G-buffer screen-space textures
+        * \param _mvpMatrices : Model, View, and Projection matrices
+        * \param _screenDims : current dimensions of screen 
+        */
+        void drawDeferred(GLuint _program, Gbuffer _gBufferTex, MVPmatrices _mvpMatrices, glm::vec2 _screenDims);
 
 
         /*!
@@ -151,8 +170,9 @@ class DrawableMesh
         * \param _frontTex : 2D texture with front face color rendering of bounding geometry
         * \param _backTex : 2D texture with back face color rendering of bounding geometry
         * \param _1dTex : 1D texture for transfer function (i.e., lookup table)
+        * \param _mvpMat: MVP matrix
         */
-        void drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue, glm::mat4 _mvpMat);
+        void drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, glm::mat4 _mvpMat);
 
         /*!
         * \fn drawIsoSurf
@@ -162,22 +182,21 @@ class DrawableMesh
         * \param _frontTex : 2D texture with front face color rendering of bounding geometry
         * \param _backTex : 2D texture with back face color rendering of bounding geometry
         * \param _1dTex : 1D texture for transfer function (i.e., lookup table)
+        * \param _isoValue: threshold value defining isosurface
+        * \param _mvpMatrices : Model, View, and Projection matrices
         */
-        void drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue,
-            glm::mat4 _modelMat, glm::mat4 _viewMat, glm::mat4 _projMat);
+        void drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue, MVPmatrices _mvpMatrices);
 
         /*!
         * \fn drawSlice
         * \brief Draw slice-quad with 3D texture mapping
         * \param _program : shader program
-        * \param _modelMat : model matrix
-        * \param _viewMat :camera view matrix
-        * \param _projMat :camera projection matrix
+        * \param _mvpMatrices : Model, View, and Projection matrices
         * \param _tex3dMat :transformation to apply of tex coords (e.g., translation for slice scrolling)
         * \param _3dTex : 3D texture with volume data
         * \param _1dTex : 1D texture for transfer function (i.e., lookup table)
         */
-        void drawSlice(GLuint _program, glm::mat4 _modelMat, glm::mat4 _viewMat, glm::mat4 _projMat, glm::mat4 _tex3dMat, GLuint _3dTex, GLuint _1dTex);
+        void drawSlice(GLuint _program, MVPmatrices _mvpMatrices, glm::mat4 _tex3dMat, GLuint _3dTex, GLuint _1dTex);
 
     protected:
 
