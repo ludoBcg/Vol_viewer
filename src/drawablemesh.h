@@ -12,18 +12,7 @@
 #ifndef DRAWABLEMESH_H
 #define DRAWABLEMESH_H
 
-#define QT_NO_OPENGL_ES_2
-#include <GL/glew.h>
-
-#include <iostream>
-#include <vector>
-#include <fstream>
-#include <sstream>
-#include <random>
-
-// Include GLM
-#define GLM_FORCE_RADIANS
-#include <glm/glm.hpp>
+#include "tools.h"
 
 
 // The attribute locations used in the vertex shader
@@ -35,22 +24,6 @@ enum AttributeLocation
     UV = 3,
     TEX3D = 4,
 };
-
-struct Gbuffer
-{
-    GLuint colTex;
-    GLuint normTex;
-    GLuint posTex;
-};
-
-struct MVPmatrices
-{
-    glm::mat4 modelMat; 
-    glm::mat4 viewMat; 
-    glm::mat4 projMat;
-};
-
-
 
 /*!
 * \class DrawableMesh
@@ -91,6 +64,8 @@ class DrawableMesh
         inline void setMaxSteps(int _maxSteps) { m_maxSteps = _maxSteps; }
         /*! \fn setUseAOFlag */
         inline void setUseAOFlag(bool _useAO) { m_useAO = _useAO; }
+        /*! \fn setUseShadowFlag */
+        inline void setUseShadowFlag(bool _useShadow) { m_useShadow = _useShadow; }
         /*! \fn setRandKernel */
         inline void setRandKernel(std::vector<glm::vec3> _randKernel) { m_randKernel = _randKernel; }
         /*! \fn setNoiseTex */
@@ -104,6 +79,8 @@ class DrawableMesh
         inline bool getMaxSteps() { return m_maxSteps; }
         /*! \fn getUseAOFlag */
         inline bool getUseAOFlag() { return m_useAO; }
+        /*! \fn getUseShadowFlag */
+        inline bool getUseShadowFlag() { return m_useShadow; }
 
 
         /*------------------------------------------------------------------------------------------------------------+
@@ -170,7 +147,7 @@ class DrawableMesh
         * \param _frontTex : 2D texture with front face color rendering of bounding geometry
         * \param _backTex : 2D texture with back face color rendering of bounding geometry
         * \param _1dTex : 1D texture for transfer function (i.e., lookup table)
-        * \param _mvpMat: MVP matrix
+        * \param _mvpMat : MVP matrix
         */
         void drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, glm::mat4 _mvpMat);
 
@@ -184,8 +161,9 @@ class DrawableMesh
         * \param _1dTex : 1D texture for transfer function (i.e., lookup table)
         * \param _isoValue: threshold value defining isosurface
         * \param _mvpMatrices : Model, View, and Projection matrices
+        *         * \param _lightDir : light direction
         */
-        void drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue, MVPmatrices _mvpMatrices);
+        void drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue, MVPmatrices _mvpMatrices, glm::vec3 _lightDir);
 
         /*!
         * \fn drawSlice
@@ -229,7 +207,8 @@ class DrawableMesh
         bool m_tex3dProvided;       /*!< flag to indicate if 3D texture coords are available or not */
         bool m_indexProvided;       /*!< flag to indicate if indices are available or not */
 
-        bool m_useAO;
+        bool m_useAO;               /*!< flag to apply screen-space ambient occlusion or not */
+        bool m_useShadow;           /*!< flag to apply shadows or not */
         GLuint m_noiseTex;          /*!< index of noise texture */
         std::vector<glm::vec3> m_randKernel;
 

@@ -24,6 +24,8 @@ DrawableMesh::DrawableMesh()
     m_tex3dProvided = false;
     m_indexProvided = false;
 
+    m_useAO = false;
+    m_useShadow = false;
 }
 
 
@@ -381,7 +383,7 @@ void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex,
 }
 
 
-void DrawableMesh::drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue, MVPmatrices _mvpMatrices)
+void DrawableMesh::drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue, MVPmatrices _mvpMatrices, glm::vec3 _lightDir)
 {
     glUseProgram(_program);
 
@@ -403,6 +405,8 @@ void DrawableMesh::drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex,
     glUniformMatrix4fv(glGetUniformLocation(_program, "u_matM"), 1, GL_FALSE, &_mvpMatrices.modelMat[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(_program, "u_matV"), 1, GL_FALSE, &_mvpMatrices.viewMat[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(_program, "u_matP"), 1, GL_FALSE, &_mvpMatrices.projMat[0][0]);
+    glUniform3fv(glGetUniformLocation(_program, "u_lightDir"), 1, &_lightDir[0]);
+    glUniform1i(glGetUniformLocation(_program, "u_useShadow"), m_useShadow);
 
 
     // Draw!
