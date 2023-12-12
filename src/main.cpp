@@ -23,11 +23,12 @@
 
 // Window
 GLFWwindow *m_window;           /*!<  GLFW window */
-int m_winWidth = 1024;          /*!<  window width (XGA) */
-int m_winHeight = 720;          /*!<  window height (XGA) */
+int m_winWidth = 800;           /*!<  window width */
+int m_winHeight = 600;          /*!<  window height */
 const unsigned int TEX_WIDTH = 2048, TEX_HEIGHT = 2048; /*!< textures dimensions  */
 
 Trackball m_trackball;          /*!<  model trackball */
+Trackball m_lightTrackball;     /*!<  light trackball */
 
 // Scene
 glm::vec3 m_centerCoords;       /*!<  coords of the center of the scene */
@@ -40,6 +41,7 @@ Camera m_cameraC;               /*!<  camera Coronal view (ortho) */
 Camera m_cameraS;               /*!<  camera Sagittal view (ortho) */
 float m_zoomFactor;             /*!<  zoom factor */
 glm::vec3 m_camPos;             /*!<  camera position */
+glm::vec3 m_lightDir;           /*!<  light direction (directional light source) */
 
 // 3D objects
 DrawableMesh* m_drawCube;       /*!<  drawable object: cube object */
@@ -74,6 +76,7 @@ GLuint m_programRayCast;        /*!< handle of the program object (i.e. shaders)
 GLuint m_programIsoSurf;        /*!< handle of the program object (i.e. shaders) for ray-casting rendering */
 GLuint m_programSlice;          /*!< handle of the program object (i.e. shaders) for slice rendering */
 GLuint m_programQuad;           /*!< handle of the program object (i.e. shaders) for screen quad rendering */
+GLuint m_programDeferred;       /*!< handle of the program object (i.e. shaders) for deferred screen space rendering of isosurface */
 
 
 // Slice orientation
@@ -94,8 +97,9 @@ bool m_startPanningA = false;           /*! flag to indicate if panning is activ
 bool m_startPanningC = false;           /*! flag to indicate if panning is activated in coronal view */
 bool m_startPanningS = false;           /*! flag to indicate if panning is activated in sagittal view */
 glm::vec2 m_prevMousePos(0.0f);
-std::vector<glm::vec3> m_randKernel;
-GLuint m_noiseTex;
+std::vector<glm::vec3> m_randKernel;    /*! random kernel for SSAO  */
+GLuint m_noiseTex;                      /*! noise texture for SSAO  */
+Gbuffer m_gBuf;                         /*! screen-space textures for G-buffer  */
 
 std::vector<glm::ivec2> m_viewportPos;  /*! Store position (i.e., origin) of each viewport (use multiple viewport for split-screen) */
 std::vector<glm::ivec2> m_viewportDim;  /*! Store dimension (i.e., resolution) of each viewport (use multiple viewport for split-screen) */
@@ -183,14 +187,15 @@ void initialize()
     m_programIsoSurf = loadShaderProgram(shaderDir + "isoSurf.vert", shaderDir + "isoSurf.frag");               // Performs ray-casting 
     m_programSlice = loadShaderProgram(shaderDir + "slice.vert", shaderDir + "slice.frag");                     // Render textured slices 
     m_programQuad = loadShaderProgram(shaderDir + "screenQuad.vert", shaderDir + "screenQuad.frag");            // Renders screenQuad with texture one
-
+    m_programDeferred = loadShaderProgram(shaderDir + "deferred.vert", shaderDir + "deferred.frag");
     
 
     // build FBO and texture output for front and back face rendering of bounding geometry
     buildScreenFBOandTex(&m_frontFaceFBO, &m_frontPosTex, TEX_WIDTH, TEX_HEIGHT);
     buildScreenFBOandTex(&m_backFaceFBO, &m_backPosTex, TEX_WIDTH, TEX_HEIGHT);
     // build G-buffer FBO and textures
-    buildGbuffFBOandTex(&m_gBufferFBO, &m_gPosition, &m_gNormal, &m_gColor, TEX_WIDTH, TEX_HEIGHT);
+    m_gBuf = { m_gColor, m_gNormal, m_gPosition };
+    buildGbuffFBOandTex(&m_gBufferFBO, m_gBuf, TEX_WIDTH, TEX_HEIGHT);
     
 
     // build 3D texture from volume and FBO for raycasting
@@ -239,8 +244,9 @@ void initScene()
     m_radScene = glm::length(bBoxMax - bBoxMin) * 0.5f;
     m_radScene = 0.5f;
 
-    // init camera and lightsource position
+    // init camera position and light direction
     m_camPos = glm::vec3(m_radScene * 1.2f, m_radScene*0.6f, m_radScene*3.0f);
+    m_lightDir = glm::vec3(0.0f, 0.0f, -1.0f);
 
     // init cameras
     m_camera3D.init(0.01f, m_radScene*8.0f, 45.0f, 1.0f, m_winWidth, m_winHeight, m_camPos, glm::vec3(0.0f, 0.0f, 0.0f), 0);
@@ -251,6 +257,7 @@ void initScene()
     
     // init trackball
     m_trackball.init(m_winWidth, m_winHeight);
+    m_lightTrackball.init(m_winWidth, m_winHeight);
 
     m_ui.sliceIdA = m_volume->getDimensions()[2] / 2;
     m_ui.sliceIdC = m_volume->getDimensions()[1] / 2;
@@ -283,6 +290,7 @@ void update()
 {
     // update model matrix with trackball rotation
     m_modelMatrix = glm::translate( m_trackball.getRotationMatrix(), -m_centerCoords);
+    m_lightDir = m_lightTrackball.getRotationMatrix() * glm::vec4(0.0f, 0.0f, -1.0f, 1.0f);
 }
 
 
@@ -300,6 +308,7 @@ void renderBoundingGeom()
     glm::mat4 projMat = m_camera3D.getProjectionMatrix();
     // apply translation after MVP for panning
     projMat = glm::translate(glm::mat4(1.0), m_translat3D) * projMat;
+    MVPmatrices mvpMatrices = { modelMat, viewMat, projMat };
 
     // 1.
     // Render the front faces of the volume bounding box to a texture
@@ -321,7 +330,7 @@ void renderBoundingGeom()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // draw objects
-    m_drawCube->drawBoundingGeom(m_programBoundingGeom, modelMat, viewMat, projMat);
+    m_drawCube->drawBoundingGeom(m_programBoundingGeom, mvpMatrices);
 
 
     // 2.
@@ -342,7 +351,7 @@ void renderBoundingGeom()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // draw objects
-    m_drawCube->drawBoundingGeom(m_programBoundingGeom, modelMat, viewMat, projMat);
+    m_drawCube->drawBoundingGeom(m_programBoundingGeom, mvpMatrices);
 
 
     // De-activate face culling
@@ -379,7 +388,11 @@ void renderRayCast()
         // apply translation after MVP for panning
         projMat = glm::translate(glm::mat4(1.0), m_translat3D) * projMat;
 
-        m_drawScreenQuad->drawIsoSurf(m_programIsoSurf, m_volTex, m_frontPosTex, m_backPosTex, m_lookupTex, m_ui.isoValue, projMat * viewMat * modelMat);
+        MVPmatrices mvpMatrices = { glm::translate(glm::mat4(1.0), glm::vec3(0.5, 0.5, 0.5)) * m_trackball.getRotationMatrix() * glm::translate(glm::mat4(1.0), glm::vec3(-0.5, -0.5, -0.5)),
+                                    viewMat, 
+                                    projMat };
+ 
+        m_drawScreenQuad->drawIsoSurf(m_programIsoSurf, m_volTex, m_frontPosTex, m_backPosTex, m_lookupTex, m_ui.isoValue, mvpMatrices, m_lightDir);
     
         if (m_ui.isBackgroundWhite)
             glClearColor(1.0f, 1.0f, 1.0f, 0.0);
@@ -424,11 +437,12 @@ void renderRayCast()
         m_drawScreenQuad->drawScreenQuad(m_programQuad, m_backPosTex, false);
     else if (m_ui.VRmode == 3)
     {
-        //m_drawScreenQuad->drawIsoSurf(m_programIsoSurf, m_volTex, m_frontPosTex, m_backPosTex, m_lookupTex, m_ui.isoValue, projMat * viewMat * modelMat);
-        m_drawScreenQuad->drawScreenQuad(m_programQuad, m_gColor, false);
+        MVPmatrices mvpMatrices = { modelMat, viewMat, projMat };
+
+        m_drawScreenQuad->drawDeferred(m_programDeferred, m_gBuf, mvpMatrices, glm::vec2(m_viewportDim[videwID].x, m_viewportDim[videwID].y));
     }
     else
-        m_drawScreenQuad->drawRayCast(m_programRayCast, m_volTex, m_frontPosTex, m_backPosTex, m_lookupTex, m_ui.isoValue, projMat * viewMat * modelMat);
+        m_drawScreenQuad->drawRayCast(m_programRayCast, m_volTex, m_frontPosTex, m_backPosTex, m_lookupTex, projMat * viewMat * modelMat);
 
     glDisable(GL_BLEND);
 
@@ -476,9 +490,12 @@ void renderSlices3D()
     translS -= 0.5f;
 
 
-    m_drawSliceA->drawSlice(m_programSlice, modelMat * glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 0.0f, translA)), viewMat, projMat, translMatA, m_volTex, m_lookupTex);
-    m_drawSliceC->drawSlice(m_programSlice, modelMat * glm::translate(glm::mat4(1.0), glm::vec3(0.0f, translC, 0.0f)), viewMat, projMat, translMatC, m_volTex, m_lookupTex);
-    m_drawSliceS->drawSlice(m_programSlice, modelMat * glm::translate(glm::mat4(1.0), glm::vec3(translS, 0.0f, 0.0f)), viewMat, projMat, translMatS, m_volTex, m_lookupTex);
+    MVPmatrices mvpMatrices = { modelMat * glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 0.0f, translA)), viewMat, projMat };
+    m_drawSliceA->drawSlice(m_programSlice, mvpMatrices, translMatA, m_volTex, m_lookupTex);
+    mvpMatrices.modelMat = modelMat * glm::translate(glm::mat4(1.0), glm::vec3(0.0f, translC, 0.0f));
+    m_drawSliceC->drawSlice(m_programSlice, mvpMatrices, translMatC, m_volTex, m_lookupTex);
+    mvpMatrices.modelMat = modelMat * glm::translate(glm::mat4(1.0), glm::vec3(translS, 0.0f, 0.0f));
+    m_drawSliceS->drawSlice(m_programSlice, mvpMatrices, translMatS, m_volTex, m_lookupTex);
 
 }
 
@@ -519,7 +536,8 @@ void renderSlice()
             float translA = (float)m_ui.sliceIdA / (float)m_volume->getDimensions()[2];
             glm::mat4 texMat = glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 0.0f, 1.0f - translA));
             glm::mat4 panMat = glm::translate(glm::mat4(1.0), m_translatA);
-            m_drawSliceA->drawSlice(m_programSlice, panMat * modelMat, viewMat, projMat, texMat, m_volTex, m_lookupTex);
+            MVPmatrices mvpMatrices = { panMat * modelMat, viewMat, projMat };
+            m_drawSliceA->drawSlice(m_programSlice, mvpMatrices, texMat, m_volTex, m_lookupTex);
         }
         else if (i == 3 || (i == 0 && m_ui.mainViewOrient == 3))
         {
@@ -528,7 +546,8 @@ void renderSlice()
             float translC = (float)m_ui.sliceIdC / (float)m_volume->getDimensions()[1];
             glm::mat4 texMat = glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 1.0f - translC, 0.0f));
             glm::mat4 panMat = glm::translate(glm::mat4(1.0), m_translatC);
-            m_drawSliceC->drawSlice(m_programSlice, panMat * modelMat, viewMat, projMat, texMat, m_volTex, m_lookupTex);
+            MVPmatrices mvpMatrices = { panMat * modelMat, viewMat, projMat };
+            m_drawSliceC->drawSlice(m_programSlice, mvpMatrices, texMat, m_volTex, m_lookupTex);
         }
         else if (i == 4 || (i == 0 && m_ui.mainViewOrient == 4))
         {
@@ -537,7 +556,8 @@ void renderSlice()
             float translS = (float)m_ui.sliceIdS / (float)m_volume->getDimensions()[0];
             glm::mat4 texMat = glm::translate(glm::mat4(1.0), glm::vec3(1.0f - translS, 0.0f, 0.0f));
             glm::mat4 panMat = glm::translate(glm::mat4(1.0), m_translatS);
-            m_drawSliceS->drawSlice(m_programSlice, panMat * modelMat, viewMat, projMat, texMat, m_volTex, m_lookupTex);
+            MVPmatrices mvpMatrices = { panMat * modelMat, viewMat, projMat };
+            m_drawSliceS->drawSlice(m_programSlice, mvpMatrices, texMat, m_volTex, m_lookupTex);
         }
         
     }
@@ -584,6 +604,7 @@ void resizeCallback(GLFWwindow* window, int width, int height)
     m_cameraC.initProjectionMatrix(m_winWidth, m_winHeight, m_zoomFactC, 1);
     m_cameraS.initProjectionMatrix(m_winWidth, m_winHeight, m_zoomFactS, 1);
     m_trackball.init(m_winWidth, m_winHeight);
+    m_lightTrackball.init(m_winWidth, m_winHeight);
 
     // keep drawing while resize
     update();
@@ -604,6 +625,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
     {
         // restart trackball
         m_trackball.reStart();
+        m_lightTrackball.reStart();
         // re-init zoom
         m_zoomFactor = 1.0f;
         m_zoomFactA = m_zoomFactC = m_zoomFactS = 0.5f;
@@ -623,6 +645,8 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
         m_programIsoSurf = loadShaderProgram(shaderDir + "isoSurf.vert", shaderDir + "isoSurf.frag");               // Performs ray-casting 
         m_programSlice = loadShaderProgram(shaderDir + "slice.vert", shaderDir + "slice.frag");                     // Render textured slices 
         m_programQuad = loadShaderProgram(shaderDir + "screenQuad.vert", shaderDir + "screenQuad.frag");
+        m_programDeferred = loadShaderProgram(shaderDir + "deferred.vert", shaderDir + "deferred.frag");
+
     }
 }
 
@@ -649,6 +673,8 @@ void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
         {
             if (button == GLFW_MOUSE_BUTTON_LEFT)
                 m_trackball.startTracking(glm::vec2(x, y));
+            else if (button == GLFW_MOUSE_BUTTON_RIGHT)
+                m_lightTrackball.startTracking(glm::vec2(x, y));
             else if (button == GLFW_MOUSE_BUTTON_MIDDLE)
             {
                 m_prevMousePos = glm::vec2(x, y);
@@ -694,6 +720,8 @@ void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
         }
         else if (button == GLFW_MOUSE_BUTTON_LEFT)
             m_trackball.stopTracking();
+        else if (button == GLFW_MOUSE_BUTTON_RIGHT)
+            m_lightTrackball.stopTracking();
     }
 }
 
@@ -767,6 +795,10 @@ void cursorPosCallback(GLFWwindow* window, double x, double y)
     {
         m_trackball.move(glm::vec2(x, y));
     }
+    else if (m_lightTrackball.isTracking())
+    {
+        m_lightTrackball.move(glm::vec2(x, y));
+    }
     else if (m_startPanningA || m_startPanningC || m_startPanningS || m_startPanning3D)
     {
         float width = (float)m_winWidth;
@@ -828,6 +860,7 @@ int main(int argc, char** argv)
         << "Welcome to Vol_viewer" << std::endl << std::endl
         << "UI commands:" << std::endl
         << " - Mouse left button (3D view): trackball" << std::endl
+        << " - Mouse right button (3D view): light trackball" << std::endl
         << " - Mouse middle button: panning" << std::endl
         << " - Mouse scroll: camera zoom" << std::endl
         << " - R: re-init trackball and cameras" << std::endl << std::endl

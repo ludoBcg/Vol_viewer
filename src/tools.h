@@ -15,6 +15,9 @@
 
 #include "volumeBase.h"
 
+#define QT_NO_OPENGL_ES_2
+#include <GL/glew.h>
+
 #define _USE_MATH_DEFINES
 #include <math.h>
 
@@ -30,6 +33,20 @@
         /*------------------------------------------------------------------------------------------------------------+
         |                                             MISC. CLASSES                                                   |
         +------------------------------------------------------------------------------------------------------------*/
+
+struct Gbuffer
+{
+    GLuint colTex;
+    GLuint normTex;
+    GLuint posTex;
+};
+
+struct MVPmatrices
+{
+    glm::mat4 modelMat;
+    glm::mat4 viewMat;
+    glm::mat4 projMat;
+};
 
 
 /*!
@@ -330,492 +347,510 @@ class Camera
         +------------------------------------------------------------------------------------------------------------*/
 
 
-
-/*!
-* \fn sphericalToEuclidean
-* \brief Spherical coordinates to Euclidean coordinates
-* \param _spherical : spherical 3D coords
-* \return 3D Euclidean coords
-*/
-glm::vec3 sphericalToEuclidean(glm::vec3 _spherical)
+namespace
 {
-    return glm::vec3( sin(_spherical.x) * cos(_spherical.y),
-                      sin(_spherical.y),
-                      cos(_spherical.x) * cos(_spherical.y) ) * _spherical.z;
-}
 
-
-
-/*!
-* \fn readShaderSource
-* \brief read shader program and copy it in a string
-* \param _filename : shader file name
-* \return string containing shader program
-*/
-std::string readShaderSource(const std::string& _filename)
-{
-    std::ifstream file(_filename);
-    std::stringstream stream;
-    stream << file.rdbuf();
-
-    return stream.str();
-}
-
-
-
-/*!
-* \fn showShaderInfoLog
-* \brief print out shader info log (i.e. compilation errors)
-* \param _shader : shader
-*/
-void showShaderInfoLog(GLuint _shader)
-{
-    GLint infoLogLength = 0;
-    glGetShaderiv(_shader, GL_INFO_LOG_LENGTH, &infoLogLength);
-    std::vector<char> infoLog(infoLogLength);
-    glGetShaderInfoLog(_shader, infoLogLength, &infoLogLength, &infoLog[0]);
-    std::string infoLogStr(infoLog.begin(), infoLog.end());
-    std::cerr << "[SHADER INFOLOG] " << infoLogStr << std::endl;
-}
-
-
-
-/*!
-* \fn showProgramInfoLog
-* \brief print out program info log (i.e. linking errors)
-* \param _program : program
-*/
-void showProgramInfoLog(GLuint _program)
-{
-    GLint infoLogLength = 0;
-    glGetProgramiv(_program, GL_INFO_LOG_LENGTH, &infoLogLength);
-    std::vector<char> infoLog(infoLogLength);
-    glGetProgramInfoLog(_program, infoLogLength, &infoLogLength, &infoLog[0]);
-    std::string infoLogStr(infoLog.begin(), infoLog.end());
-    std::cerr << "[PROGRAM INFOLOG] " << infoLogStr << std::endl;
-}
-
-
-
-/*!
-* \fn loadShaderProgram
-* \brief load shader program from shader files
-* \param _vertShaderFilename : vertex shader filename
-* \param _fragShaderFilename : fragment shader filename
-*/
-GLuint loadShaderProgram(const std::string& _vertShaderFilename, const std::string& _fragShaderFilename, const std::string& _vertHeader="", const std::string& _fragHeader="")
-{
-    // read headers
-    std::string vertHeaderSource, fragHeaderSource;
-    vertHeaderSource = readShaderSource(_vertHeader);
-    fragHeaderSource = readShaderSource(_fragHeader);
-
-
-    // Load and compile vertex shader
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    std::string vertexShaderSource = readShaderSource(_vertShaderFilename);
-    if(!_vertHeader.empty() )
+    /*!
+    * \fn sphericalToEuclidean
+    * \brief Spherical coordinates to Euclidean coordinates
+    * \param _spherical : spherical 3D coords
+    * \return 3D Euclidean coords
+    */
+    glm::vec3 sphericalToEuclidean(glm::vec3 _spherical)
     {
-        // if headers are provided, add them to the shader
-        const char *vertSources[2] = {vertHeaderSource.c_str(), vertexShaderSource.c_str()};
-        glShaderSource(vertexShader, 2, vertSources, nullptr);
+        return glm::vec3(sin(_spherical.x) * cos(_spherical.y),
+            sin(_spherical.y),
+            cos(_spherical.x) * cos(_spherical.y)) * _spherical.z;
     }
-    else
+
+
+
+    /*!
+    * \fn readShaderSource
+    * \brief read shader program and copy it in a string
+    * \param _filename : shader file name
+    * \return string containing shader program
+    */
+    std::string readShaderSource(const std::string& _filename)
     {
-        // if no header provided, the shader is contained in a single file
-        const char *vertexShaderSourcePtr = vertexShaderSource.c_str();
-        glShaderSource(vertexShader, 1, &vertexShaderSourcePtr, nullptr);
+        std::ifstream file(_filename);
+        std::stringstream stream;
+        stream << file.rdbuf();
+
+        return stream.str();
     }
-    glCompileShader(vertexShader);
-    GLint success = 0;
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success) 
+
+
+
+    /*!
+    * \fn showShaderInfoLog
+    * \brief print out shader info log (i.e. compilation errors)
+    * \param _shader : shader
+    */
+    void showShaderInfoLog(GLuint _shader)
     {
-        std::cerr << "[ERROR] loadShaderProgram(): Vertex shader compilation failed:" << std::endl;
-        showShaderInfoLog(vertexShader);
-        glDeleteShader(vertexShader);
-        return 0;
+        GLint infoLogLength = 0;
+        glGetShaderiv(_shader, GL_INFO_LOG_LENGTH, &infoLogLength);
+        std::vector<char> infoLog(infoLogLength);
+        glGetShaderInfoLog(_shader, infoLogLength, &infoLogLength, &infoLog[0]);
+        std::string infoLogStr(infoLog.begin(), infoLog.end());
+        std::cerr << "[SHADER INFOLOG] " << infoLogStr << std::endl;
     }
 
 
-    // Load and compile fragment shader
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    std::string fragmentShaderSource = readShaderSource(_fragShaderFilename);
-    if(!_fragHeader.empty() )
+
+    /*!
+    * \fn showProgramInfoLog
+    * \brief print out program info log (i.e. linking errors)
+    * \param _program : program
+    */
+    void showProgramInfoLog(GLuint _program)
     {
-        // if headers are provided, add them to the shader
-        const char *fragSources[2] = {fragHeaderSource.c_str(), fragmentShaderSource.c_str()};
-        glShaderSource(fragmentShader, 2, fragSources, nullptr);
+        GLint infoLogLength = 0;
+        glGetProgramiv(_program, GL_INFO_LOG_LENGTH, &infoLogLength);
+        std::vector<char> infoLog(infoLogLength);
+        glGetProgramInfoLog(_program, infoLogLength, &infoLogLength, &infoLog[0]);
+        std::string infoLogStr(infoLog.begin(), infoLog.end());
+        std::cerr << "[PROGRAM INFOLOG] " << infoLogStr << std::endl;
     }
-    else
+
+
+
+    /*!
+    * \fn loadShaderProgram
+    * \brief load shader program from shader files
+    * \param _vertShaderFilename : vertex shader filename
+    * \param _fragShaderFilename : fragment shader filename
+    */
+    GLuint loadShaderProgram(const std::string& _vertShaderFilename, const std::string& _fragShaderFilename, const std::string& _vertHeader = "", const std::string& _fragHeader = "")
     {
-        // if no header provided, the shader is contained in a single file
-        const char *fragmentShaderSourcePtr = fragmentShaderSource.c_str();
-        glShaderSource(fragmentShader, 1, &fragmentShaderSourcePtr, nullptr);
+        // read headers
+        std::string vertHeaderSource, fragHeaderSource;
+        vertHeaderSource = readShaderSource(_vertHeader);
+        fragHeaderSource = readShaderSource(_fragHeader);
+
+
+        // Load and compile vertex shader
+        GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+        std::string vertexShaderSource = readShaderSource(_vertShaderFilename);
+        if (!_vertHeader.empty())
+        {
+            // if headers are provided, add them to the shader
+            const char* vertSources[2] = { vertHeaderSource.c_str(), vertexShaderSource.c_str() };
+            glShaderSource(vertexShader, 2, vertSources, nullptr);
+        }
+        else
+        {
+            // if no header provided, the shader is contained in a single file
+            const char* vertexShaderSourcePtr = vertexShaderSource.c_str();
+            glShaderSource(vertexShader, 1, &vertexShaderSourcePtr, nullptr);
+        }
+        glCompileShader(vertexShader);
+        GLint success = 0;
+        glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+        if (!success)
+        {
+            std::cerr << "[ERROR] loadShaderProgram(): Vertex shader compilation failed:" << std::endl;
+            showShaderInfoLog(vertexShader);
+            glDeleteShader(vertexShader);
+            return 0;
+        }
+
+
+        // Load and compile fragment shader
+        GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+        std::string fragmentShaderSource = readShaderSource(_fragShaderFilename);
+        if (!_fragHeader.empty())
+        {
+            // if headers are provided, add them to the shader
+            const char* fragSources[2] = { fragHeaderSource.c_str(), fragmentShaderSource.c_str() };
+            glShaderSource(fragmentShader, 2, fragSources, nullptr);
+        }
+        else
+        {
+            // if no header provided, the shader is contained in a single file
+            const char* fragmentShaderSourcePtr = fragmentShaderSource.c_str();
+            glShaderSource(fragmentShader, 1, &fragmentShaderSourcePtr, nullptr);
+        }
+        glCompileShader(fragmentShader);
+        success = 0;
+        glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+        if (!success)
+        {
+            std::cerr << "[ERROR] loadShaderProgram(): Fragment shader compilation failed:" << std::endl;
+            showShaderInfoLog(fragmentShader);
+            glDeleteShader(vertexShader);
+            glDeleteShader(fragmentShader);
+            return 0;
+        }
+
+
+        // Create program object
+        GLuint program = glCreateProgram();
+
+        // Attach shaders to the program
+        glAttachShader(program, vertexShader);
+        glAttachShader(program, fragmentShader);
+
+
+        // Link program
+        glLinkProgram(program);
+
+        // Check linking status
+        success = 0;
+        glGetProgramiv(program, GL_LINK_STATUS, &success);
+        if (!success)
+        {
+            std::cerr << "[ERROR] loadShaderProgram(): Linking failed:" << std::endl;
+            showProgramInfoLog(program);
+            glDeleteProgram(program);
+            glDeleteShader(vertexShader);
+            glDeleteShader(fragmentShader);
+            return 0;
+        }
+
+        // Clean up
+        glDetachShader(program, vertexShader);
+        glDetachShader(program, fragmentShader);
+
+        return program;
     }
-    glCompileShader(fragmentShader);
-    success = 0;
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success) 
+
+
+
+
+    /*!
+    * \fn buildScreenFBOandTex
+    * \brief Generate a FBO and attach a texture to its color output (used for various screen texture generation)
+    * \param _screenFBO : pointer to id of FBO to generate
+    * \param _screenTex : pointer to id of texture to generate
+    * \param _texWidth : texture width
+    * \param _texHeight : texture height
+    */
+    void buildScreenFBOandTex(GLuint* _screenFBO, GLuint* _screenTex, unsigned int _texWidth, unsigned int _texHeight)
     {
-        std::cerr << "[ERROR] loadShaderProgram(): Fragment shader compilation failed:" << std::endl;
-        showShaderInfoLog(fragmentShader);
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
-        return 0;
-    }
+
+        // generate FBO 
+        glGenFramebuffers(1, _screenFBO);
+
+        // generate texture
+        glGenTextures(1, _screenTex);
+        glBindTexture(GL_TEXTURE_2D, *_screenTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _texWidth, _texHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        // bind FBO
+        glBindFramebuffer(GL_FRAMEBUFFER, *_screenFBO);
+
+        // attach textures to color output of the FBO
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, *_screenTex, 0);
 
 
-    // Create program object
-    GLuint program = glCreateProgram();
-
-    // Attach shaders to the program
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, fragmentShader);
-
-
-    // Link program
-    glLinkProgram(program);
-
-    // Check linking status
-    success = 0;
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-    if (!success) 
-    {
-        std::cerr << "[ERROR] loadShaderProgram(): Linking failed:" << std::endl;
-        showProgramInfoLog(program);
-        glDeleteProgram(program);
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
-        return 0;
-    }
-
-    // Clean up
-    glDetachShader(program, vertexShader);
-    glDetachShader(program, fragmentShader);
-
-    return program;
-}
-
-
-
-
-/*!
-* \fn buildScreenFBOandTex
-* \brief Generate a FBO and attach a texture to its color output (used for various screen texture generation)
-* \param _screenFBO : pointer to id of FBO to generate
-* \param _screenTex : pointer to id of texture to generate
-* \param _texWidth : texture width
-* \param _texHeight : texture height
-*/
-void buildScreenFBOandTex(GLuint* _screenFBO, GLuint* _screenTex, unsigned int _texWidth, unsigned int _texHeight)
-{
-
-    // generate FBO 
-    glGenFramebuffers(1, _screenFBO);
-
-    // generate texture
-    glGenTextures(1, _screenTex);
-    glBindTexture(GL_TEXTURE_2D, *_screenTex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _texWidth, _texHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    // bind FBO
-    glBindFramebuffer(GL_FRAMEBUFFER, *_screenFBO);
-
-    // attach textures to color output of the FBO
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, *_screenTex, 0);
-
-
-    // create and attach depth buffer (renderbuffer) to handle polygon occlusion properly (for 3D geometry rendering)
-    unsigned int rboScreen;
-    glGenRenderbuffers(1, &rboScreen);
-    glBindRenderbuffer(GL_RENDERBUFFER, rboScreen);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, _texWidth, _texHeight);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboScreen);
-
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        std::cerr << "[ERROR] buildScreenFBOandTex(): screen FBO incomplete" << std::endl;
-    }
-
-    // Bind default framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-
-/*!
-* \fn build1DTex
-* \brief Create a 1D texture and writes data into it using a normal distribution / Gaussian ft (used to build transfer functions).
-* This texture is a lookup table / palette for 8b volume rendering, therefore the width is always 256
-* \param _1dTex : pointer to id of texture to generate
-* \param _mean : mean value of the Gaussian
-* \param _radius : half-width of the Gaussian (= 2*std deviation, we consider the area that covers 95.45% of total integral)
-*/
-void build1DTex(GLuint* _1dTex, unsigned int _mean, unsigned int _radius)
-{
-    // create array of 256 values, sampled from a Gaussian curve
-    float sigma = _radius * 0.5f; // std dev
-    float factor = 1.0f / (float)( 1.0f / (sigma * sqrt(2.0f * M_PI)) * exp(-1.0f * pow((float)_mean - (float)_mean, 2) / (2.0f * sigma * sigma)) );
-    //std::cout << factor << std::endl;
-    std::vector<float> gaussValues;
-    for (unsigned int i = 0; i < 256; i++)
-    {
-        float val = 1.0f / (float)( sigma * sqrt(2.0f * M_PI) * exp( -1.0f * pow((float)i - (float)_mean, 2) / (2.0f * sigma * sigma) ) );
-        
-        gaussValues.push_back(val * factor);
-    }
-
-    // generate 1D texture
-    glGenTextures(1, _1dTex);
-    glBindTexture(GL_TEXTURE_1D, *_1dTex);
-    glTexImage1D(GL_TEXTURE_1D, 0, GL_R8, 256, 0, GL_RED, GL_FLOAT, &gaussValues[0]);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glBindTexture(GL_TEXTURE_1D, 0);
-}
-
-
-/*!
-* \fn build3DTex
-* \brief Create a 3D texture and copy volume data into it.
-* \param _volTex : pointer to id of texture to generate
-* \param _vol : 3D image data (i.e., volume)
-* \param _useNearest : flag to indicate if texture uses GL_NEAREST param (if not, uses GL_LINEAR by default)
-*/
-void build3DTex(GLuint* _volTex, VolumeBase<std::uint8_t>* _vol, bool _useNearest = false)
-{
-    GLint param;
-    _useNearest ? param = GL_NEAREST : param = GL_LINEAR;
-    //_useNearest ? param = GL_NEAREST_MIPMAP_NEAREST : param = GL_LINEAR_MIPMAP_NEAREST;
-
-    // generate 3D texture
-    glGenTextures(1, _volTex);
-    glBindTexture(GL_TEXTURE_3D, *_volTex);
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_R8, _vol->getDimensions().x, _vol->getDimensions().y, _vol->getDimensions().z, 0, GL_RED, GL_UNSIGNED_BYTE, _vol->getFront());
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, param);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, param);
-
-    //glGenerateMipmap(GL_TEXTURE_3D);
-
-    glBindTexture(GL_TEXTURE_3D, 0);
-}
-
-
-/*!
-* \fn update3DTex
-* \brief Update the content of  a 3D texture.
-* \param _volTex : pointer to id of texture
-* \param _vol : new 3D image data (i.e., volume)
-*/
-void update3DTex(GLuint* _volTex, VolumeBase<std::uint8_t>* _vol)
-{
-
-    glBindTexture(GL_TEXTURE_3D, *_volTex);
-
-    glTexSubImage3D(GL_TEXTURE_3D, // target
-        0, // level
-        0, // x offset
-        0, // y offset
-        0, // z offset
-        _vol->getDimensions().x,
-        _vol->getDimensions().y,
-        _vol->getDimensions().z,
-        GL_RED, // format
-        GL_UNSIGNED_BYTE, // type
-        _vol->getFront()); // zeroed memory
-
-    //glGenerateMipmap(GL_TEXTURE_3D);
-
-    glBindTexture(GL_TEXTURE_3D, 0);
-}
-
-
-/*!
-* \fn buildScreenFBOandTex
-* \brief Generate a FBO and attach a texture to its color output (used for various screen texture generation)
-*        - can use a renderbuffer to handle depth buffering (for 3D geometry rendering) 
-         - can initialize texture with null alpha value (for TSD texture generation)
-* \param _screenFBO : pointer to id of FBO to generate
-* \param _screenTex : pointer to id of texture to generate 
-* \param _texWidth : texture width
-* \param _texHeight : texture height
-* \param _useRenderBuffer : use a renderbuffer or not
-* \param _nullAlpha : initialize texture with null alpha or not
-*/
-void buildScreenFBOandTex(GLuint *_screenFBO, GLuint *_screenTex, unsigned int _texWidth, unsigned int _texHeight, bool _useRenderBuffer, bool _nullAlpha )
-{
-
-    // generate FBO 
-    glGenFramebuffers(1, _screenFBO);
-
-    // generate texture
-    glGenTextures(1, _screenTex);
-    glBindTexture(GL_TEXTURE_2D, *_screenTex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F,  _texWidth, _texHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    
-    // bind FBO
-    glBindFramebuffer(GL_FRAMEBUFFER, *_screenFBO);
-
-    // attach textures to color output of the FBO
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, *_screenTex, 0);
-
-    if(_nullAlpha)
-    {   
-        glDrawBuffer(GL_COLOR_ATTACHMENT0); //Only need to do this once.
-        // make sure that alphae channel is set to zero everywhere (for gaussian blur mask in TSD)
-        GLuint clearColor[4] = {0, 0, 0, 0};
-        glClearBufferuiv(GL_COLOR, 0, clearColor);
-    }
-
-    if(_useRenderBuffer)
-    {
         // create and attach depth buffer (renderbuffer) to handle polygon occlusion properly (for 3D geometry rendering)
         unsigned int rboScreen;
         glGenRenderbuffers(1, &rboScreen);
         glBindRenderbuffer(GL_RENDERBUFFER, rboScreen);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, _texWidth, _texHeight);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboScreen);
+
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            std::cerr << "[ERROR] buildScreenFBOandTex(): screen FBO incomplete" << std::endl;
+        }
+
+        // Bind default framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        std::cerr << "[ERROR] buildScreenFBOandTex(): screen FBO incomplete" <<std::endl;
-    }
 
-    // Bind default framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);  
-}
-
-
-/*!
-* \fn buildGbuffFBOandTex
-* \brief Generate a FBO and attach textures to 2 color outputs (used for G-buffer textures generation)
-*        Use a renderbuffer to handle depth buffering
-* \param _gFBO : pointer to id of FBO to generate
-* \param _gPosition : pointer to id of texture to generate for 1st color output
-* \param _gNormal : pointer to id of texture to generate for 2nd color output
-* \param _gColor : pointer to id of texture to generate for 3rd color output
-* \param _texWidth : texture width
-* \param _texHeight : texture height
-*/
-void buildGbuffFBOandTex(GLuint* _gFBO, GLuint* _gPosition, GLuint* _gNormal, GLuint* _gColor, unsigned int _texWidth, unsigned int _texHeight)
-{
-    // generate FBO 
-    glGenFramebuffers(1, _gFBO);
-
-    // 1st texture (position buffer)
-    glGenTextures(1, _gPosition);
-    glBindTexture(GL_TEXTURE_2D, *_gPosition);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _texWidth, _texHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    // 2nd texture (normal buffer)
-    glGenTextures(1, _gNormal);
-    glBindTexture(GL_TEXTURE_2D, *_gNormal);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _texWidth, _texHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    // 3rd texture (color buffer)
-    glGenTextures(1, _gColor);
-    glBindTexture(GL_TEXTURE_2D, *_gColor);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _texWidth, _texHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    // bind FBO
-    glBindFramebuffer(GL_FRAMEBUFFER, *_gFBO);
-
-    // attach textures to different color outputs of the FBO
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, *_gPosition, 0);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, *_gNormal, 0);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, *_gColor, 0);
-
-    // handle multiple color attachments
-    GLenum attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-    glDrawBuffers(3, attachments);
-
-    // create and attach depth buffer (renderbuffer)
-    unsigned int rboGbuff;
-    glGenRenderbuffers(1, &rboGbuff);
-    glBindRenderbuffer(GL_RENDERBUFFER, rboGbuff);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, _texWidth, _texHeight);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboGbuff);
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        std::cerr << "[ERROR] buildGbuffFBOandTex(): G-buffer FBO incomplete" << std::endl;
-    }
-
-    // Bind default framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-
-float lerp(float a, float b, float f)
-{
-    return a + f * (b - a);
-}
-
-void buildRandKernel(std::vector<glm::vec3>& _kernel)
-{
-    // generate sample kernel 
-    std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // random floats between 0.0 and 1.0
-    std::default_random_engine generator;
-    _kernel.clear();
-
-    int i = 0;
-    while (i < 64)
+    /*!
+    * \fn build1DTex
+    * \brief Create a 1D texture and writes data into it using a normal distribution / Gaussian ft (used to build transfer functions).
+    * This texture is a lookup table / palette for 8b volume rendering, therefore the width is always 256
+    * \param _1dTex : pointer to id of texture to generate
+    * \param _mean : mean value of the Gaussian
+    * \param _radius : half-width of the Gaussian (= 2*std deviation, we consider the area that covers 95.45% of total integral)
+    */
+    void build1DTex(GLuint* _1dTex, unsigned int _mean, unsigned int _radius)
     {
-        glm::vec3 sample(randomFloats(generator) * 2.0 - 1.0,
-                         randomFloats(generator) * 2.0 - 1.0,
-                         randomFloats(generator));
-        if (glm::length(sample) <= 1.0)
-        {
-            sample = glm::normalize(sample);
-            sample *= randomFloats(generator);
-            float scale = (float)i / 64.0f;
+        // create array of 256 values, sampled from a Gaussian curve
+        float sigma = _radius * 0.5f; // std dev
+        float factor = 1.0f / (float)(1.0f / (sigma * sqrt(2.0f * M_PI)) * exp(-1.0f * pow((float)_mean - (float)_mean, 2) / (2.0f * sigma * sigma)));
 
-            // scale samples s.t. they're more aligned to center of kernel
-            scale = lerp(0.1f, 1.0f, scale * scale);
-            _kernel.push_back(sample);
-            i++;
+        std::vector<float> gaussValues;
+        for (unsigned int i = 0; i < 256; i++)
+        {
+            float val = 1.0f / (float)(sigma * sqrt(2.0f * M_PI) * exp(-1.0f * pow((float)i - (float)_mean, 2) / (2.0f * sigma * sigma)));
+
+            gaussValues.push_back(val * factor);
+        }
+
+        // generate 1D texture
+        glGenTextures(1, _1dTex);
+        glBindTexture(GL_TEXTURE_1D, *_1dTex);
+        glTexImage1D(GL_TEXTURE_1D, 0, GL_R8, 256, 0, GL_RED, GL_FLOAT, &gaussValues[0]);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glBindTexture(GL_TEXTURE_1D, 0);
+    }
+
+
+    /*!
+    * \fn build3DTex
+    * \brief Create a 3D texture and copy volume data into it.
+    * \param _volTex : pointer to id of texture to generate
+    * \param _vol : 3D image data (i.e., volume)
+    * \param _useNearest : flag to indicate if texture uses GL_NEAREST param (if not, uses GL_LINEAR by default)
+    */
+    void build3DTex(GLuint* _volTex, VolumeBase<std::uint8_t>* _vol, bool _useNearest = false)
+    {
+        GLint param;
+        _useNearest ? param = GL_NEAREST : param = GL_LINEAR;
+        //_useNearest ? param = GL_NEAREST_MIPMAP_NEAREST : param = GL_LINEAR_MIPMAP_NEAREST;
+
+        // generate 3D texture
+        glGenTextures(1, _volTex);
+        glBindTexture(GL_TEXTURE_3D, *_volTex);
+        glTexImage3D(GL_TEXTURE_3D, 0, GL_R8, _vol->getDimensions().x, _vol->getDimensions().y, _vol->getDimensions().z, 0, GL_RED, GL_UNSIGNED_BYTE, _vol->getFront());
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, param);
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, param);
+
+        //glGenerateMipmap(GL_TEXTURE_3D);
+
+        glBindTexture(GL_TEXTURE_3D, 0);
+    }
+
+
+    /*!
+    * \fn update3DTex
+    * \brief Update the content of  a 3D texture.
+    * \param _volTex : pointer to id of texture
+    * \param _vol : new 3D image data (i.e., volume)
+    */
+    void update3DTex(GLuint* _volTex, VolumeBase<std::uint8_t>* _vol)
+    {
+
+        glBindTexture(GL_TEXTURE_3D, *_volTex);
+
+        glTexSubImage3D(GL_TEXTURE_3D, // target
+            0, // level
+            0, // x offset
+            0, // y offset
+            0, // z offset
+            _vol->getDimensions().x,
+            _vol->getDimensions().y,
+            _vol->getDimensions().z,
+            GL_RED, // format
+            GL_UNSIGNED_BYTE, // type
+            _vol->getFront()); // zeroed memory
+
+        //glGenerateMipmap(GL_TEXTURE_3D);
+
+        glBindTexture(GL_TEXTURE_3D, 0);
+    }
+
+
+    /*!
+    * \fn buildScreenFBOandTex
+    * \brief Generate a FBO and attach a texture to its color output (used for various screen texture generation)
+    *        - can use a renderbuffer to handle depth buffering (for 3D geometry rendering)
+             - can initialize texture with null alpha value (for TSD texture generation)
+    * \param _screenFBO : pointer to id of FBO to generate
+    * \param _screenTex : pointer to id of texture to generate
+    * \param _texWidth : texture width
+    * \param _texHeight : texture height
+    * \param _useRenderBuffer : use a renderbuffer or not
+    * \param _nullAlpha : initialize texture with null alpha or not
+    */
+    void buildScreenFBOandTex(GLuint* _screenFBO, GLuint* _screenTex, unsigned int _texWidth, unsigned int _texHeight, bool _useRenderBuffer, bool _nullAlpha)
+    {
+
+        // generate FBO 
+        glGenFramebuffers(1, _screenFBO);
+
+        // generate texture
+        glGenTextures(1, _screenTex);
+        glBindTexture(GL_TEXTURE_2D, *_screenTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _texWidth, _texHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        // bind FBO
+        glBindFramebuffer(GL_FRAMEBUFFER, *_screenFBO);
+
+        // attach textures to color output of the FBO
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, *_screenTex, 0);
+
+        if (_nullAlpha)
+        {
+            glDrawBuffer(GL_COLOR_ATTACHMENT0); //Only need to do this once.
+            // make sure that alphae channel is set to zero everywhere (for gaussian blur mask in TSD)
+            GLuint clearColor[4] = { 0, 0, 0, 0 };
+            glClearBufferuiv(GL_COLOR, 0, clearColor);
+        }
+
+        if (_useRenderBuffer)
+        {
+            // create and attach depth buffer (renderbuffer) to handle polygon occlusion properly (for 3D geometry rendering)
+            unsigned int rboScreen;
+            glGenRenderbuffers(1, &rboScreen);
+            glBindRenderbuffer(GL_RENDERBUFFER, rboScreen);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, _texWidth, _texHeight);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboScreen);
+        }
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            std::cerr << "[ERROR] buildScreenFBOandTex(): screen FBO incomplete" << std::endl;
+        }
+
+        // Bind default framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+
+    /*!
+    * \fn buildGbuffFBOandTex
+    * \brief Generate a FBO and attach textures to 2 color outputs (used for G-buffer textures generation)
+    *        Use a renderbuffer to handle depth buffering
+    * \param _gFBO : pointer to id of FBO to generate
+    * \param _gPosition : pointer to id of texture to generate for 1st color output
+    * \param _gNormal : pointer to id of texture to generate for 2nd color output
+    * \param _gColor : pointer to id of texture to generate for 3rd color output
+    * \param _texWidth : texture width
+    * \param _texHeight : texture height
+    */
+    //void buildGbuffFBOandTex(GLuint* _gFBO, GLuint* _gPosition, GLuint* _gNormal, GLuint* _gColor, unsigned int _texWidth, unsigned int _texHeight)
+    void buildGbuffFBOandTex(GLuint* _gFBO, Gbuffer& _gBufferTex, unsigned int _texWidth, unsigned int _texHeight)
+    {
+        // generate FBO 
+        glGenFramebuffers(1, _gFBO);
+
+        // 1st texture (position buffer)
+        glGenTextures(1, &_gBufferTex.posTex);
+        glBindTexture(GL_TEXTURE_2D, _gBufferTex.posTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _texWidth, _texHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        // 2nd texture (normal buffer)
+        glGenTextures(1, &_gBufferTex.normTex);
+        glBindTexture(GL_TEXTURE_2D, _gBufferTex.normTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _texWidth, _texHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        // 3rd texture (color buffer)
+        glGenTextures(1, &_gBufferTex.colTex);
+        glBindTexture(GL_TEXTURE_2D, _gBufferTex.colTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _texWidth, _texHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+
+        // bind FBO
+        glBindFramebuffer(GL_FRAMEBUFFER, *_gFBO);
+
+        // attach textures to different color outputs of the FBO
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, _gBufferTex.posTex/**_gPosition*/, 0);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, _gBufferTex.normTex/**_gNormal*/, 0);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, _gBufferTex.colTex/**_gColor*/, 0);
+
+        // handle multiple color attachments
+        GLenum attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+        glDrawBuffers(3, attachments);
+
+        // create and attach depth buffer (renderbuffer)
+        unsigned int rboGbuff;
+        glGenRenderbuffers(1, &rboGbuff);
+        glBindRenderbuffer(GL_RENDERBUFFER, rboGbuff);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, _texWidth, _texHeight);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboGbuff);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            std::cerr << "[ERROR] buildGbuffFBOandTex(): G-buffer FBO incomplete" << std::endl;
+        }
+
+        // Bind default framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+
+    float lerp(float a, float b, float f)
+    {
+        return a + f * (b - a);
+    }
+
+
+    /*!
+    * \fn buildRandKernel
+    * \brief Generate a sample kernel in tangent-space hemisphere
+    * \param _kernel : randomly sampled positions
+    */
+    void buildRandKernel(std::vector<glm::vec3>& _kernel)
+    {
+        // generate sample kernel 
+        std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // random floats between 0.0 and 1.0
+        std::default_random_engine generator;
+        _kernel.clear();
+
+        int i = 0;
+        while (i < 256)
+        {
+            glm::vec3 sample(randomFloats(generator) * 2.0 - 1.0,
+                randomFloats(generator) * 2.0 - 1.0,
+                randomFloats(generator));
+            if (glm::length(sample) <= 1.0)
+            {
+                sample = glm::normalize(sample);
+                sample *= randomFloats(generator);
+                float scale = (float)i / 64.0f;
+
+                // scale samples s.t. they're more aligned to center of kernel
+                scale = lerp(0.1f, 1.0f, scale * scale);
+                _kernel.push_back(sample);
+                i++;
+            }
         }
     }
-}
 
-void buildKernelRot(GLuint& _noiseTex)
-{
-    std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // random floats between 0.0 and 1.0
-    std::default_random_engine generator;
 
-    //create a 4x4 array of random rotation vectors oriented around the tangent-space surface normal
-    std::vector<glm::vec3> ssaoNoise;
-    for (unsigned int i = 0; i < 16; i++)
+    /*!
+    * \fn buildRandKernel
+    * \brief Generate random rotation vectors, to be stored in a texture
+    * \param _noiseTex : 2D texture to containing the output random vectors
+    */
+    void buildKernelRot(GLuint& _noiseTex)
     {
-        glm::vec3 noise(randomFloats(generator) * 2.0 - 1.0,
-                        randomFloats(generator) * 2.0 - 1.0,
-                        0.0f);
+        std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // random floats between 0.0 and 1.0
+        std::default_random_engine generator;
 
-        ssaoNoise.push_back(noise);
+        //create a 4x4 array of random rotation vectors oriented around the tangent-space surface normal
+        std::vector<glm::vec3> ssaoNoise;
+        for (unsigned int i = 0; i < 256; i++)
+        {
+            glm::vec3 noise(randomFloats(generator) * 2.0 - 1.0,
+                randomFloats(generator) * 2.0 - 1.0,
+                0.0f);
+
+            ssaoNoise.push_back(noise);
+        }
+
+        glGenTextures(1, &_noiseTex);
+        glBindTexture(GL_TEXTURE_2D, _noiseTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 16, 16, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
 
-    glGenTextures(1, &_noiseTex);
-    glBindTexture(GL_TEXTURE_2D, _noiseTex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-}
 
+}
 
 #endif // TOOLS_H
