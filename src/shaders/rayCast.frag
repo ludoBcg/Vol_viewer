@@ -1,10 +1,6 @@
 // Fragment shader
 #version 150
 
-#define RAYCAST_MODE_MIP 0
-#define RAYCAST_MODE_COMPOSITE 1
-#define RAYCAST_MODE_ISOSURFACE 2
-
 
 uniform sampler3D u_volumeTexture;
 uniform sampler2D u_backFaceTexture;
@@ -48,7 +44,7 @@ void main()
 {
     vec4 color = vec4(0.0);
 	
-	float u_stepSize = 1.732/float(u_maxSteps); //1.732 = sqrt(3) = diag length
+	float stepSize = 1.732/float(u_maxSteps); //1.732 = sqrt(3) = diag length
 
     vec4 frontFace = texture(u_frontFaceTexture, v_texcoord);
     vec4 backFace = texture(u_backFaceTexture, v_texcoord);
@@ -58,8 +54,7 @@ void main()
     vec3 rayStart = frontFace.xyz;
     vec3 rayStop = backFace.xyz;
     vec3 rayDir = normalize(rayStop - rayStart);
-	int numSteps = int(length(rayStart - rayStop) / u_stepSize );
-
+	int numSteps = int(length(rayStart - rayStop) / stepSize );
     vec4 accumMIP = vec4(0.0);
 	vec4 accumAB = vec4(0.0);
 
@@ -75,11 +70,11 @@ void main()
 
 		vec4 tfColor = vec4(intensity, intensity, intensity, intensity);
 		tfColor.a = clamp(1.0 * intensity, 0.0, 1.0);
-		tfColor.a *= u_stepSize / 0.02; // juste to reduce the alpha when you accumulate too many layers
+		tfColor.a *= stepSize / 0.02; // juste to reduce the alpha when you accumulate too many layers
 		accumAB.rgb += (tfColor.rgb * tfColor.a) * (1.0 - accumAB.a); // accumulate color (ponderated by reduced alpha) with a decreasing weight
 		accumAB.a += tfColor.a * (1.0 - accumAB.a); //accumulate alpha with a decreasing weight			
 
-		pos += u_stepSize * rayDir;
+		pos += stepSize * rayDir;
 	}
 
 	if (u_modeVR == 1) //MIP

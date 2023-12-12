@@ -725,7 +725,6 @@ namespace
     * \param _texWidth : texture width
     * \param _texHeight : texture height
     */
-    //void buildGbuffFBOandTex(GLuint* _gFBO, GLuint* _gPosition, GLuint* _gNormal, GLuint* _gColor, unsigned int _texWidth, unsigned int _texHeight)
     void buildGbuffFBOandTex(GLuint* _gFBO, Gbuffer& _gBufferTex, unsigned int _texWidth, unsigned int _texHeight)
     {
         // generate FBO 
@@ -757,9 +756,9 @@ namespace
         glBindFramebuffer(GL_FRAMEBUFFER, *_gFBO);
 
         // attach textures to different color outputs of the FBO
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, _gBufferTex.posTex/**_gPosition*/, 0);
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, _gBufferTex.normTex/**_gNormal*/, 0);
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, _gBufferTex.colTex/**_gColor*/, 0);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, _gBufferTex.posTex, 0);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, _gBufferTex.normTex, 0);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, _gBufferTex.colTex, 0);
 
         // handle multiple color attachments
         GLenum attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
@@ -844,8 +843,8 @@ namespace
         glGenTextures(1, &_noiseTex);
         glBindTexture(GL_TEXTURE_2D, _noiseTex);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 16, 16, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR /*GL_NEAREST*/);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR /*GL_NEAREST*/);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }

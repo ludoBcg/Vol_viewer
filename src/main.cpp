@@ -369,6 +369,12 @@ void renderBoundingGeom()
 
 void renderRayCast()
 {
+    int viewID = 0;
+    if (!m_ui.singleView)
+    {
+        viewID = 1;
+    }
+
     if (m_ui.VRmode == 3)
     {
         // G-buffer for isosurface rendering (WIP)
@@ -392,7 +398,8 @@ void renderRayCast()
                                     viewMat, 
                                     projMat };
  
-        m_drawScreenQuad->drawIsoSurf(m_programIsoSurf, m_volTex, m_frontPosTex, m_backPosTex, m_lookupTex, m_ui.isoValue, mvpMatrices, m_lightDir);
+        m_drawScreenQuad->drawIsoSurf(m_programIsoSurf, m_volTex, m_frontPosTex, m_backPosTex, m_lookupTex, 
+                                      m_ui.isoValue, mvpMatrices, m_lightDir, glm::vec2(m_viewportDim[viewID].x, m_viewportDim[viewID].y));
     
         if (m_ui.isBackgroundWhite)
             glClearColor(1.0f, 1.0f, 1.0f, 0.0);
@@ -406,15 +413,9 @@ void renderRayCast()
     // Clear window with background color
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    int videwID = 0;
-    if (!m_ui.singleView)
-    {
-        videwID = 1;
-    }
-
 
     // resize viewport to window dimensions
-    glViewport(m_viewportPos[videwID].x, m_viewportPos[videwID].y, m_viewportDim[videwID].x, m_viewportDim[videwID].y);
+    glViewport(m_viewportPos[viewID].x, m_viewportPos[viewID].y, m_viewportDim[viewID].x, m_viewportDim[viewID].y);
 
     // Clear window with background color
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -439,7 +440,7 @@ void renderRayCast()
     {
         MVPmatrices mvpMatrices = { modelMat, viewMat, projMat };
 
-        m_drawScreenQuad->drawDeferred(m_programDeferred, m_gBuf, mvpMatrices, glm::vec2(m_viewportDim[videwID].x, m_viewportDim[videwID].y));
+        m_drawScreenQuad->drawDeferred(m_programDeferred, m_gBuf, mvpMatrices, glm::vec2(m_viewportDim[viewID].x, m_viewportDim[viewID].y));
     }
     else
         m_drawScreenQuad->drawRayCast(m_programRayCast, m_volTex, m_frontPosTex, m_backPosTex, m_lookupTex, projMat * viewMat * modelMat);

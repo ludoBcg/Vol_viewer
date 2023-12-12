@@ -1,10 +1,6 @@
 // Fragment shader
 #version 330
 
-#define RAYCAST_MODE_MIP 0
-#define RAYCAST_MODE_COMPOSITE 1
-#define RAYCAST_MODE_ISOSURFACE 2
-
 // Ouput data (G-buffer)
 layout(location = 0) out vec4 gPosition;
 layout(location = 1) out vec4 gNormal;
@@ -14,6 +10,7 @@ layout(location = 2) out vec4 gColor;
 uniform sampler3D u_volumeTexture;
 uniform sampler2D u_backFaceTexture;
 uniform sampler2D u_frontFaceTexture;
+uniform sampler2D u_noiseTex;
 uniform bool u_useGammaCorrec;
 uniform bool u_useShadow;
 uniform int u_maxSteps;
@@ -22,12 +19,15 @@ uniform vec3 u_lightDir;
 uniform mat4 u_matM;
 uniform mat4 u_matV;
 uniform mat4 u_matP;
+uniform vec2 u_screenDims;
 
 
 in vec2 v_texcoord;
 
 out vec4 frag_color;
 
+
+vec2 noiseScale = vec2(u_screenDims[0] * 0.2, u_screenDims[1] * 0.2);
 
 // Performs interval bisection that can be used to improve the
 // accuracy of iso-surface detection. Based on a CG example in the
@@ -119,6 +119,9 @@ void main()
     vec4 frontFace = texture(u_frontFaceTexture, v_texcoord);
     vec4 backFace = texture(u_backFaceTexture, v_texcoord);
 
+	// sample random vec
+	vec3 randomVec = texture(u_noiseTex, v_texcoord * noiseScale).xyz;
+
     if (frontFace.a == 0.0 || backFace.a == 0) { discard; }
 
     vec3 rayStart = frontFace.xyz;
@@ -132,7 +135,9 @@ void main()
 	L = normalize(u_lightDir);
 	L = normalize(mat3(inverse(u_matM)) * u_lightDir);
 
-    vec3 pos = rayStart;
+	vec3 pos = rayStart;
+	// add randomlength in raw direction to start position
+	pos += length(randomVec) * stepsize * rayDir;
     float intensity = 0.0;
 
 	for (int i = 0; i < numSteps; ++i) 

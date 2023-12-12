@@ -161,9 +161,11 @@ class DrawableMesh
         * \param _1dTex : 1D texture for transfer function (i.e., lookup table)
         * \param _isoValue: threshold value defining isosurface
         * \param _mvpMatrices : Model, View, and Projection matrices
-        *         * \param _lightDir : light direction
+        * \param _lightDir : light direction
+        * \param _screenDims : current dimensions of screen 
         */
-        void drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, GLuint _isoValue, MVPmatrices _mvpMatrices, glm::vec3 _lightDir);
+        void drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, 
+                         GLuint _isoValue, MVPmatrices _mvpMatrices, glm::vec3 _lightDir, glm::vec2 _screenDims);
 
         /*!
         * \fn drawSlice
