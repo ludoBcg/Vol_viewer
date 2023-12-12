@@ -20,7 +20,6 @@
 #include "imgui_impl_opengl3.h"
 
 #include "volumeImg.h"
-#include "tools.h"
 #include "drawablemesh.h"
 
 
@@ -29,12 +28,13 @@ std::string dataDir = "../../data/";         /*!< relative path to img files fol
 struct UI {
     int mainViewOrient = 1; /*! Defines which type of view is in main view (1=3D, 2=A, 3=C, 4=S) */
     glm::vec3 backColor = glm::vec3(0.5f, 0.5f, 0.5f); /*!< background color */
-    bool isBackgroundWhite = false;     /*!< background color flag */
+    bool isBackgroundWhite = false;   /*!< background color flag */
     bool isGammaCorrecOn = false;     /*!< Gamma correction flag */
-    bool isAOOn = false;
+    bool isAOOn = false;              /*!< Ambient Occlusion flag */
+    bool isShadowOn = false;          /*!< Shadows flag */
     bool showFrontTex = false;        /*! Show front face texture of the bounding geometry*/
     bool showBackTex = false;         /*! Show back face texture of the bounding geometry*/
-    bool singleView = true;          /*! Split screen or not*/
+    bool singleView = true;           /*! Split screen or not*/
     bool VR = false;                  /*! Show VolumeRendering view or not (3D slices)*/
     int VRmode = 1;                   /*! Use MIP (1) or alpha blending (2) or custom (3) mode for VR*/
     bool useTexNearest = false;       /*! flag to indicate if texture uses GL_NEAREST param (if not, uses GL_LINEAR by default)*/
@@ -104,7 +104,7 @@ void GUI( UI& _ui,
             // Second tab: Visualization
             if (ImGui::BeginTabItem("Visu"))
             {
-                if (ImGui::Checkbox("Show nearest voxel (reloads volume !)", &_ui.useTexNearest))
+                if (ImGui::Checkbox("Show nearest voxel", &_ui.useTexNearest))
                 {
                     // build 3D texture from volume and FBO for raycasting
                     build3DTex(&_volTex, &_volume, _ui.useTexNearest);
@@ -135,7 +135,12 @@ void GUI( UI& _ui,
                         {
                             ImGui::SliderInt("Iso value", &_ui.isoValue, 0, 255);
 
-                            if (ImGui::Checkbox("AO ", &_ui.isAOOn))
+                            if (ImGui::Checkbox("Shadows", &_ui.isShadowOn))
+                            {
+                                _drawScreenQuad.setUseShadowFlag(_ui.isShadowOn);
+                            }
+
+                            if (ImGui::Checkbox("AO", &_ui.isAOOn))
                             {
                                 _drawScreenQuad.setUseAOFlag(_ui.isAOOn);
                             }
