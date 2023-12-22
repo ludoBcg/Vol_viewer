@@ -349,7 +349,8 @@ void DrawableMesh::drawDeferred(GLuint _program, Gbuffer _gBufferTex, MVPmatrice
 }
 
 
-void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, glm::mat4 _mvpMat)
+void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, 
+                               glm::mat4 _mvpMat, glm::vec2 _screenDims)
 {
     glUseProgram(_program);
 
@@ -360,15 +361,19 @@ void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex,
     glBindTexture(GL_TEXTURE_2D, _frontTex);
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, _backTex);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, m_noiseTex);
 
     // set uniforms
     glUniform1i(glGetUniformLocation(_program, "u_volumeTexture"), 0);
     glUniform1i(glGetUniformLocation(_program, "u_frontFaceTexture"), 1);
     glUniform1i(glGetUniformLocation(_program, "u_backFaceTexture"), 2);
+    glUniform1i(glGetUniformLocation(_program, "u_noiseTex"), 3);
     glUniform1i(glGetUniformLocation(_program, "u_useGammaCorrec"), m_useGammaCorrec);
     glUniform1i(glGetUniformLocation(_program, "u_modeVR"), m_modeVR);
     glUniform1i(glGetUniformLocation(_program, "u_maxSteps"), m_maxSteps);
     glUniformMatrix4fv(glGetUniformLocation(_program, "u_matMVP"), 1, GL_FALSE, &_mvpMat[0][0]);
+    glUniform2fv(glGetUniformLocation(_program, "u_screenDims"), 1, &_screenDims[0]);
 
 
     // Draw!

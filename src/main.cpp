@@ -443,7 +443,8 @@ void renderRayCast()
         m_drawScreenQuad->drawDeferred(m_programDeferred, m_gBuf, mvpMatrices, glm::vec2(m_viewportDim[viewID].x, m_viewportDim[viewID].y));
     }
     else
-        m_drawScreenQuad->drawRayCast(m_programRayCast, m_volTex, m_frontPosTex, m_backPosTex, m_lookupTex, projMat * viewMat * modelMat);
+        m_drawScreenQuad->drawRayCast(m_programRayCast, m_volTex, m_frontPosTex, m_backPosTex, m_lookupTex, 
+                                      projMat * viewMat * modelMat, glm::vec2(m_viewportDim[viewID].x, m_viewportDim[viewID].y));
 
     glDisable(GL_BLEND);
 

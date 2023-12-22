@@ -33,10 +33,10 @@ vec2 noiseScale = vec2(u_screenDims[0] * 0.2, u_screenDims[1] * 0.2);
 // accuracy of iso-surface detection. Based on a CG example in the
 // SIGGRAPH2009 course notes on Advanced Illumination Techniques for
 // GPU-Based Volume Raycasting.
-vec3 interval_bisection(vec3 ray_position, vec3 ray_direction, float _stepsize)
+vec3 interval_bisection(vec3 ray_position, vec3 ray_direction, float _stepSize)
 {
-	// start = voxel pos - stepsize*raydir
-	vec3 start = ray_position - _stepsize * ray_direction;
+	// start = voxel pos - stepSize*raydir
+	vec3 start = ray_position - _stepSize * ray_direction;
 	// end = voxel pos
 	vec3 end = ray_position;
 	int num_bisections = 4;
@@ -87,15 +87,15 @@ vec3 linearToGamma(in vec3 color)
 }
 
 
-int shadowRay(vec3 _pos, vec3 _lightDir, vec3 _rayDir, float _stepsize) 
+int shadowRay(vec3 _pos, vec3 _lightDir, vec3 _rayDir, float _stepSize) 
 {
 	float maxStep = u_maxSteps * 0.5;
 
-	_pos -= _stepsize * _rayDir; // offset to get out of surface 
+	_pos -= _stepSize * _rayDir; // offset to get out of surface 
 
 	for (int i = 0; i < int(maxStep); i++)
 	{
-		_pos += _stepsize * _lightDir;
+		_pos += _stepSize * _lightDir;
 
 		if (texture(u_volumeTexture, _pos).r > u_isoValue)
 			return 1;
@@ -114,7 +114,7 @@ void main()
 
     vec4 color = vec4(0.0);
 	mat4 matMVP = u_matP * u_matV * u_matM;     // assemble model-viw-projection matrix
-	float stepsize = 1.732/float(u_maxSteps); //1.732 = sqrt(3) = diag length
+	float stepSize = 1.732/float(u_maxSteps);   //1.732 = sqrt(3) = diag length
 
     vec4 frontFace = texture(u_frontFaceTexture, v_texcoord);
     vec4 backFace = texture(u_backFaceTexture, v_texcoord);
@@ -127,7 +127,7 @@ void main()
     vec3 rayStart = frontFace.xyz;
     vec3 rayStop = backFace.xyz;
     vec3 rayDir = normalize(rayStop - rayStart);
-	int numSteps = int(length(rayStart - rayStop) / stepsize);
+	int numSteps = int(length(rayStart - rayStop) / stepSize);
 
 	//vec4 Nreturn = vec4(0.0, 0.0, 0.0, 1.0); // normal to write in output texture
 	//vec4 Preturn = vec4(0.0, 0.0, 0.0, 1.0); // position to write in output texture
@@ -137,7 +137,7 @@ void main()
 
 	vec3 pos = rayStart;
 	// add randomlength in raw direction to start position
-	pos += length(randomVec) * stepsize * rayDir;
+	pos += length(randomVec) * stepSize * rayDir;
     float intensity = 0.0;
 
 	for (int i = 0; i < numSteps; ++i) 
@@ -149,14 +149,14 @@ void main()
 			break;
 		}
 
-		pos += stepsize * rayDir;
+		pos += stepSize * rayDir;
 	}
 
 	// shading of surface voxel
 	if (intensity >= u_isoValue)
 	{
 		//improve accuracy of iso surface position
-		pos = interval_bisection(pos, rayDir, stepsize);
+		pos = interval_bisection(pos, rayDir, stepSize);
 
 		// normal vec in 3D texture space
 		vec3 normal = normalize(-imageGradient(u_volumeTexture, pos));
@@ -173,7 +173,7 @@ vec3 N = normalize(normal);
 		vec3 ambientColor = vec3(0.1, 0.1, 0.1);
 
 		if(u_useShadow)
-			diffuseColor *= (1.0 - shadowRay(pos, L, rayDir, stepsize) );
+			diffuseColor *= (1.0 - shadowRay(pos, L, rayDir, stepSize) );
 
 		color.rgb = diffuseColor + ambientColor;
 		color.a = 1.0;

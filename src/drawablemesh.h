@@ -149,7 +149,8 @@ class DrawableMesh
         * \param _1dTex : 1D texture for transfer function (i.e., lookup table)
         * \param _mvpMat : MVP matrix
         */
-        void drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, glm::mat4 _mvpMat);
+        void drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, 
+                         glm::mat4 _mvpMat, glm::vec2 _screenDims);
 
         /*!
         * \fn drawIsoSurf
