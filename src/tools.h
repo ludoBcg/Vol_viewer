@@ -28,6 +28,7 @@
 #define NOMINMAX // avoid min*max macros to interfer with std::min/max from <windows.h>
 
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/noise.hpp>
 
 
         /*------------------------------------------------------------------------------------------------------------+
@@ -849,6 +850,62 @@ namespace
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
 
+    /*!
+    * \fn buildPerlinTex
+    * \brief Generate pseudo random Perlin noise, to be stored in a texture
+    * \param _noiseTex : 2D texture to containing the output random values
+    */
+    void buildPerlinTex(GLuint& _perlinTex)
+    {
+        std::vector<float> noise;
+        for (unsigned int i = 0; i < 128; i++)
+        {
+            for (unsigned int j = 0; j < 128; j++)
+            {
+                float val = glm::perlin(glm::vec2((float)i / 128.0 * 30.0, (float)j / 128.0 * 30.0));
+                noise.push_back( val );
+            }
+        }
+
+        glGenTextures(1, &_perlinTex);
+        glBindTexture(GL_TEXTURE_2D, _perlinTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 128, 128, 0, GL_RED, GL_FLOAT, &noise[0]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR /*GL_NEAREST*/);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR /*GL_NEAREST*/);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    }
+
+
+
+    //// Compute Perlin noise at coordinates x, y
+    //float perlinNoise(int _x, int _y) 
+    //{
+    //    // Determine grid cell coordinates
+    //    int x0 = _x;
+    //    int x1 = x0 + 1;
+    //    int y0 = _y;
+    //    int y1 = y0 + 1;
+
+    //    // Determine interpolation weights
+    //    // Could also use higher order polynomial/s-curve here
+    //    float sx = _x - (float)x0;
+    //    float sy = _y - (float)y0;
+
+    //    // Interpolate between grid point gradients
+    //    float n0, n1, ix0, ix1, value;
+
+    //    n0 = dotGridGradient(x0, y0, x, y);
+    //    n1 = dotGridGradient(x1, y0, x, y);
+    //    ix0 = interpolate(n0, n1, sx);
+
+    //    n0 = dotGridGradient(x0, y1, x, y);
+    //    n1 = dotGridGradient(x1, y1, x, y);
+    //    ix1 = interpolate(n0, n1, sx);
+
+    //    value = interpolate(ix0, ix1, sy);
+    //    return value; // Will return in range -1 to 1. To make it in range 0 to 1, multiply by 0.5 and add 0.5
+    //}
 
 }
 
