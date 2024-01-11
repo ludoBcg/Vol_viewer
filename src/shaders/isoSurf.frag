@@ -10,9 +10,10 @@ layout(location = 2) out vec4 gColor;
 uniform sampler3D u_volumeTexture;
 uniform sampler2D u_backFaceTexture;
 uniform sampler2D u_frontFaceTexture;
-uniform sampler2D u_noiseTex;
+uniform sampler2D u_perlinTex;
 uniform bool u_useGammaCorrec;
 uniform bool u_useShadow;
+uniform bool u_useJitter;
 uniform int u_maxSteps;
 uniform float u_isoValue;
 uniform vec3 u_lightDir;
@@ -27,7 +28,7 @@ in vec2 v_texcoord;
 out vec4 frag_color;
 
 
-vec2 noiseScale = vec2(u_screenDims[0] * 0.2, u_screenDims[1] * 0.2);
+vec2 perlinNoiseScale = vec2(u_screenDims[0] * 0.01, u_screenDims[1] * 0.01);
 
 // Performs interval bisection that can be used to improve the
 // accuracy of iso-surface detection. Based on a CG example in the
@@ -119,8 +120,8 @@ void main()
     vec4 frontFace = texture(u_frontFaceTexture, v_texcoord);
     vec4 backFace = texture(u_backFaceTexture, v_texcoord);
 
-	// sample random vec
-	vec3 randomVec = texture(u_noiseTex, v_texcoord * noiseScale).xyz;
+	// sample random value from Perlin noise
+	float randomVal = texture(u_perlinTex, v_texcoord * perlinNoiseScale).r;
 
     if (frontFace.a == 0.0 || backFace.a == 0) { discard; }
 
@@ -136,8 +137,12 @@ void main()
 	L = normalize(mat3(inverse(u_matM)) * u_lightDir);
 
 	vec3 pos = rayStart;
-	// add randomlength in raw direction to start position
-	pos += length(randomVec) * stepSize * rayDir;
+	if (u_useJitter)
+	{
+		// add random length in ray direction to start position
+		pos += randomVal * stepSize * rayDir;
+	}
+
     float intensity = 0.0;
 
 	for (int i = 0; i < numSteps; ++i) 
