@@ -93,6 +93,10 @@ void GUI( UI& _ui,
         {
             loadFile(dataDir + _ui.fileName, _volume, _volTex);
 
+            _drawScreenQuad.setMaxSteps(glm::length(glm::vec3((float)_volume.getDimensions().x,
+                                                              (float)_volume.getDimensions().y,
+                                                              (float)_volume.getDimensions().z)));
+
             _ui.sliceIdA = _volume.getDimensions()[2] / 2;
             _ui.sliceIdC = _volume.getDimensions()[1] / 2;
             _ui.sliceIdS = _volume.getDimensions()[0] / 2;
