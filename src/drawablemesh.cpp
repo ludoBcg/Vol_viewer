@@ -26,6 +26,7 @@ DrawableMesh::DrawableMesh()
 
     m_useAO = false;
     m_useShadow = false;
+    m_useJitter = false;
 }
 
 
@@ -363,12 +364,16 @@ void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex,
     glBindTexture(GL_TEXTURE_2D, _backTex);
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, m_noiseTex);
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, m_perlinTex);
 
     // set uniforms
     glUniform1i(glGetUniformLocation(_program, "u_volumeTexture"), 0);
     glUniform1i(glGetUniformLocation(_program, "u_frontFaceTexture"), 1);
     glUniform1i(glGetUniformLocation(_program, "u_backFaceTexture"), 2);
     glUniform1i(glGetUniformLocation(_program, "u_noiseTex"), 3);
+    glUniform1i(glGetUniformLocation(_program, "u_perlinTex"), 4);
+    glUniform1i(glGetUniformLocation(_program, "u_useJitter"), m_useJitter);
     glUniform1i(glGetUniformLocation(_program, "u_useGammaCorrec"), m_useGammaCorrec);
     glUniform1i(glGetUniformLocation(_program, "u_modeVR"), m_modeVR);
     glUniform1i(glGetUniformLocation(_program, "u_maxSteps"), m_maxSteps);
@@ -401,13 +406,13 @@ void DrawableMesh::drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex,
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, _backTex);
     glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, m_noiseTex);
+    glBindTexture(GL_TEXTURE_2D, m_perlinTex);
 
     // set uniforms
     glUniform1i(glGetUniformLocation(_program, "u_volumeTexture"), 0);
     glUniform1i(glGetUniformLocation(_program, "u_frontFaceTexture"), 1);
     glUniform1i(glGetUniformLocation(_program, "u_backFaceTexture"), 2);
-    glUniform1i(glGetUniformLocation(_program, "u_noiseTex"), 3);
+    glUniform1i(glGetUniformLocation(_program, "u_perlinTex"), 3);
     glUniform1i(glGetUniformLocation(_program, "u_useGammaCorrec"), m_useGammaCorrec);
     glUniform1i(glGetUniformLocation(_program, "u_maxSteps"), m_maxSteps);
     glUniform1f(glGetUniformLocation(_program, "u_isoValue"), (float)_isoValue / 255.0f);
@@ -416,6 +421,7 @@ void DrawableMesh::drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex,
     glUniformMatrix4fv(glGetUniformLocation(_program, "u_matP"), 1, GL_FALSE, &_mvpMatrices.projMat[0][0]);
     glUniform3fv(glGetUniformLocation(_program, "u_lightDir"), 1, &_lightDir[0]);
     glUniform1i(glGetUniformLocation(_program, "u_useShadow"), m_useShadow);
+    glUniform1i(glGetUniformLocation(_program, "u_useJitter"), m_useJitter);
     glUniform2fv(glGetUniformLocation(_program, "u_screenDims"), 1, &_screenDims[0]);
 
 

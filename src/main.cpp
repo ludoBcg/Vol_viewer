@@ -100,6 +100,7 @@ glm::vec2 m_prevMousePos(0.0f);
 std::vector<glm::vec3> m_randKernel;    /*! random kernel for SSAO  */
 GLuint m_noiseTex;                      /*! noise texture for SSAO  */
 Gbuffer m_gBuf;                         /*! screen-space textures for G-buffer  */
+GLuint m_perlinTex;
 
 std::vector<glm::ivec2> m_viewportPos;  /*! Store position (i.e., origin) of each viewport (use multiple viewport for split-screen) */
 std::vector<glm::ivec2> m_viewportDim;  /*! Store dimension (i.e., resolution) of each viewport (use multiple viewport for split-screen) */
@@ -206,9 +207,11 @@ void initialize()
 
     buildRandKernel(m_randKernel);
     buildKernelRot(m_noiseTex);
+    buildPerlinTex(m_perlinTex);
 
     m_drawScreenQuad->setRandKernel(m_randKernel);
     m_drawScreenQuad->setNoiseTex(m_noiseTex);
+    m_drawScreenQuad->setPerlinTex(m_perlinTex);
 
 }
 

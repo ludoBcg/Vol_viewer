@@ -66,10 +66,14 @@ class DrawableMesh
         inline void setUseAOFlag(bool _useAO) { m_useAO = _useAO; }
         /*! \fn setUseShadowFlag */
         inline void setUseShadowFlag(bool _useShadow) { m_useShadow = _useShadow; }
+        /*! \fn setUseJitterFlag */
+        inline void setUseJitterFlag(bool _useJitter) { m_useJitter = _useJitter; }
         /*! \fn setRandKernel */
         inline void setRandKernel(std::vector<glm::vec3> _randKernel) { m_randKernel = _randKernel; }
         /*! \fn setNoiseTex */
         inline void setNoiseTex(GLuint _noiseTex) { m_noiseTex = _noiseTex; }
+        /*! \fn setPerlinTex */
+        inline void setPerlinTex(GLuint _perlinTex) { m_perlinTex = _perlinTex; }
 
         /*! \fn getUseGammaCorrecFlag */
         inline bool getUseGammaCorrecFlag() { return m_useGammaCorrec; }
@@ -81,6 +85,8 @@ class DrawableMesh
         inline bool getUseAOFlag() { return m_useAO; }
         /*! \fn getUseShadowFlag */
         inline bool getUseShadowFlag() { return m_useShadow; }
+        /*! \fn getUseJitterFlag */
+        inline bool getUseJitterFlag() { return m_useJitter; }
 
 
         /*------------------------------------------------------------------------------------------------------------+
@@ -212,7 +218,9 @@ class DrawableMesh
 
         bool m_useAO;               /*!< flag to apply screen-space ambient occlusion or not */
         bool m_useShadow;           /*!< flag to apply shadows or not */
+        bool m_useJitter;           /*!< flag to apply jittering or not */
         GLuint m_noiseTex;          /*!< index of noise texture */
+        GLuint m_perlinTex;          /*!< index of perlin noise texture */
         std::vector<glm::vec3> m_randKernel;
 
         /*------------------------------------------------------------------------------------------------------------+
