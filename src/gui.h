@@ -44,7 +44,8 @@ struct UI {
     int sliceIdS;                     /*! ID of the Sagittal slice to visualize*/
     std::string fileName;
     char current_file[256] = {};
-    int isoValue = 127;                 /*! threshold isosurface rendering */
+    int isoValue = 127;               /*! threshold isosurface rendering */
+    float opacity = 0.02f;            /*! opacity factor for alpha blending */
 };
 
 void loadFile(std::string _fileName, VolumeImg& _volume, GLuint& _volTex)

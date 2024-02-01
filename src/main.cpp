@@ -447,7 +447,7 @@ void renderRayCast()
     }
     else
         m_drawScreenQuad->drawRayCast(m_programRayCast, m_volTex, m_frontPosTex, m_backPosTex, m_lookupTex, 
-                                      projMat * viewMat * modelMat, glm::vec2(m_viewportDim[viewID].x, m_viewportDim[viewID].y));
+                                      projMat * viewMat * modelMat, glm::vec2(m_viewportDim[viewID].x, m_viewportDim[viewID].y), m_ui.opacity);
 
     glDisable(GL_BLEND);
 

@@ -13,6 +13,7 @@ uniform int u_modeVR; // MIP = 1, alpha blending = 2
 uniform int u_maxSteps;
 uniform mat4 u_matMVP;
 uniform vec2 u_screenDims;
+uniform float u_opacity;
 
 
 
@@ -84,7 +85,7 @@ void main()
 
 		vec4 tfColor = vec4(intensity, intensity, intensity, intensity);
 		tfColor.a = clamp(1.0 * intensity, 0.0, 1.0);
-		tfColor.a *= stepSize / 0.02; // juste to reduce the alpha when you accumulate too many layers
+		tfColor.a *= stepSize / u_opacity; // reduce the alpha when you accumulate too many layers
 		accumAB.rgb += (tfColor.rgb * tfColor.a) * (1.0 - accumAB.a); // accumulate color (ponderated by reduced alpha) with a decreasing weight
 		accumAB.a += tfColor.a * (1.0 - accumAB.a); //accumulate alpha with a decreasing weight			
 
