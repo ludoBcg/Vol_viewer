@@ -156,7 +156,7 @@ class DrawableMesh
         * \param _mvpMat : MVP matrix
         */
         void drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, 
-                         glm::mat4 _mvpMat, glm::vec2 _screenDims, float _opacity);
+                         glm::mat4 _mvpMat, glm::vec2 _screenDims, float _transparency);
 
         /*!
         * \fn drawIsoSurf

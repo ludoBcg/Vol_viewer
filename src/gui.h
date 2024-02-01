@@ -45,7 +45,7 @@ struct UI {
     std::string fileName;
     char current_file[256] = {};
     int isoValue = 127;               /*! threshold isosurface rendering */
-    float opacity = 0.02f;            /*! opacity factor for alpha blending */
+    float transparency = 0.02f;       /*! opacity factor for alpha blending */
 };
 
 void loadFile(std::string _fileName, VolumeImg& _volume, GLuint& _volTex)
@@ -136,6 +136,11 @@ void GUI( UI& _ui,
                             _drawScreenQuad.setModeVR(2);
                         if (ImGui::RadioButton("isosurface", &_ui.VRmode, 3))
                             _drawScreenQuad.setModeVR(3);
+
+                        if (_ui.VRmode == 2)
+                        {
+                            ImGui::SliderFloat("transparency", &_ui.transparency, 0.005f, 0.2f);
+                        }
 
                         if (_ui.VRmode == 3)
                         {
