@@ -42,6 +42,13 @@ struct Gbuffer
     GLuint posTex;
 };
 
+struct RayCasting
+{
+    GLuint frontPosTex;
+    GLuint backPosTex;
+    GLuint volTex;
+};
+
 struct MVPmatrices
 {
     glm::mat4 modelMat;

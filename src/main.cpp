@@ -65,10 +65,12 @@ GLuint m_gBufferFBO;            /*!< FBO for G-buffer: renders fragment position
 GLuint m_frontPosTex;           /*!< Front face bounding geometry position screen-texture */
 GLuint m_backPosTex;            /*!< Back face bounding geometry position screen-texture */
 GLuint m_volTex;                /*!< Volume 3D texture */
+RayCasting m_rayCasting;        /*!< Textures for ray-casting  */
 GLuint m_lookupTex;             /*!< TF 1D texture */
 GLuint m_gPosition;             /*!< G-buffer position screen-texture */
 GLuint m_gNormal;               /*!< G-buffer normal screen-texture */
 GLuint m_gColor;                /*!< G-buffer color screen-textures */
+Gbuffer m_gBuf;                 /*!< screen-space textures for G-buffer  */
 
 // shader programs
 GLuint m_programBoundingGeom;   /*!< handle of the program object (i.e. shaders) for bounding geometry rendering */
@@ -99,7 +101,6 @@ bool m_startPanningS = false;           /*! flag to indicate if panning is activ
 glm::vec2 m_prevMousePos(0.0f);
 std::vector<glm::vec3> m_randKernel;    /*! random kernel for SSAO  */
 GLuint m_noiseTex;                      /*! noise texture for SSAO  */
-Gbuffer m_gBuf;                         /*! screen-space textures for G-buffer  */
 GLuint m_perlinTex;
 
 std::vector<glm::ivec2> m_viewportPos;  /*! Store position (i.e., origin) of each viewport (use multiple viewport for split-screen) */
@@ -191,16 +192,16 @@ void initialize()
     m_programDeferred = loadShaderProgram(shaderDir + "deferred.vert", shaderDir + "deferred.frag");
     
 
+    // build 3D texture from volume and FBO for raycasting
+    build3DTex(&m_volTex, m_volume.get());
     // build FBO and texture output for front and back face rendering of bounding geometry
     buildScreenFBOandTex(&m_frontFaceFBO, &m_frontPosTex, TEX_WIDTH, TEX_HEIGHT);
     buildScreenFBOandTex(&m_backFaceFBO, &m_backPosTex, TEX_WIDTH, TEX_HEIGHT);
+    m_rayCasting = { m_frontFaceFBO , m_backFaceFBO, m_volTex };
     // build G-buffer FBO and textures
     m_gBuf = { m_gColor, m_gNormal, m_gPosition };
     buildGbuffFBOandTex(&m_gBufferFBO, m_gBuf, TEX_WIDTH, TEX_HEIGHT);
     
-
-    // build 3D texture from volume and FBO for raycasting
-    build3DTex(&m_volTex, m_volume.get());
 
     // build transfer function
     build1DTex(&m_lookupTex, 100, 80);
