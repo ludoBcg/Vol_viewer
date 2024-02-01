@@ -149,11 +149,11 @@ void GUI( UI& _ui,
                             {
                                 _drawScreenQuad.setUseAOFlag(_ui.isAOOn);
                             }
+                        }
 
-                            if (ImGui::Checkbox("Jitter", &_ui.isJitterOn))
-                            {
-                                _drawScreenQuad.setUseJitterFlag(_ui.isJitterOn);
-                            }
+                        if (ImGui::Checkbox("Jitter", &_ui.isJitterOn))
+                        {
+                            _drawScreenQuad.setUseJitterFlag(_ui.isJitterOn);
                         }
                     }
                 }

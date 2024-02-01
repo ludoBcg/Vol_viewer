@@ -23,7 +23,7 @@ out vec4 frag_color;
 
 float compAO()
 {
-	int kernelSize = 40;
+	int kernelSize = 64;
 	float bias = 0.1;
 	vec2 noiseScale = vec2(u_screenDims[0] * 0.2, u_screenDims[1] * 0.2);
 	float radius = 1.0;
@@ -93,7 +93,7 @@ void main()
 		float AO = compAO();
 		color.rgb *= AO;
 	}
-		
+
 	frag_color = color;
 }
 
