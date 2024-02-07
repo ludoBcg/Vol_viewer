@@ -52,7 +52,7 @@ void loadFile(std::string _fileName, VolumeImg& _volume, GLuint& _volTex)
 {
     _volume.volumeLoad(_fileName);
     //initScene();
-    build3DTex(&_volTex, &_volume);
+    build3DTex(_volTex, &_volume);
 }
 
 
@@ -113,7 +113,7 @@ void GUI( UI& _ui,
                 if (ImGui::Checkbox("Show nearest voxel", &_ui.useTexNearest))
                 {
                     // build 3D texture from volume and FBO for raycasting
-                    build3DTex(&_volTex, &_volume, _ui.useTexNearest);
+                    build3DTex(_volTex, &_volume, _ui.useTexNearest);
                 }
 
                 if (ImGui::Checkbox("Gamma correction ", &_ui.isGammaCorrecOn))

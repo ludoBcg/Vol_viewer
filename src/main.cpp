@@ -192,19 +192,21 @@ void initialize()
     m_programDeferred = loadShaderProgram(shaderDir + "deferred.vert", shaderDir + "deferred.frag");
     
 
-    // build 3D texture from volume and FBO for raycasting
-    build3DTex(&m_volTex, m_volume.get());
-    // build FBO and texture output for front and back face rendering of bounding geometry
-    buildScreenFBOandTex(&m_frontFaceFBO, &m_frontPosTex, TEX_WIDTH, TEX_HEIGHT);
-    buildScreenFBOandTex(&m_backFaceFBO, &m_backPosTex, TEX_WIDTH, TEX_HEIGHT);
     m_rayCasting = { m_frontFaceFBO , m_backFaceFBO, m_volTex };
+
+    // build 3D texture from volume and FBO for raycasting
+     build3DTex(m_rayCasting.volTex, m_volume.get());
+    // build FBO and texture output for front and back face rendering of bounding geometry
+    buildScreenFBOandTex(m_frontFaceFBO, m_rayCasting.frontPosTex, TEX_WIDTH, TEX_HEIGHT);
+    buildScreenFBOandTex(m_backFaceFBO, m_rayCasting.backPosTex, TEX_WIDTH, TEX_HEIGHT);
+    
     // build G-buffer FBO and textures
     m_gBuf = { m_gColor, m_gNormal, m_gPosition };
-    buildGbuffFBOandTex(&m_gBufferFBO, m_gBuf, TEX_WIDTH, TEX_HEIGHT);
+    buildGbuffFBOandTex(m_gBufferFBO, m_gBuf, TEX_WIDTH, TEX_HEIGHT);
     
 
     // build transfer function
-    build1DTex(&m_lookupTex, 100, 80);
+    build1DTex(m_lookupTex, 100, 80);
 
     buildRandKernel(m_randKernel);
     buildKernelRot(m_noiseTex);
@@ -402,8 +404,8 @@ void renderRayCast()
                                     viewMat, 
                                     projMat };
  
-        m_drawScreenQuad->drawIsoSurf(m_programIsoSurf, m_volTex, m_frontPosTex, m_backPosTex, m_lookupTex, 
-                                      m_ui.isoValue, mvpMatrices, m_lightDir, glm::vec2(m_viewportDim[viewID].x, m_viewportDim[viewID].y));
+        m_drawScreenQuad->drawIsoSurf(m_programIsoSurf, m_rayCasting, m_lookupTex, m_ui.isoValue, mvpMatrices, 
+                                      m_lightDir, glm::vec2(m_viewportDim[viewID].x, m_viewportDim[viewID].y));
     
         if (m_ui.isBackgroundWhite)
             glClearColor(1.0f, 1.0f, 1.0f, 0.0);
@@ -437,9 +439,9 @@ void renderRayCast()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     if (m_ui.showFrontTex)
-        m_drawScreenQuad->drawScreenQuad(m_programQuad, m_frontPosTex, false);
+        m_drawScreenQuad->drawScreenQuad(m_programQuad, m_rayCasting.frontPosTex, false);
     else if (m_ui.showBackTex)
-        m_drawScreenQuad->drawScreenQuad(m_programQuad, m_backPosTex, false);
+        m_drawScreenQuad->drawScreenQuad(m_programQuad, m_rayCasting.backPosTex, false);
     else if (m_ui.VRmode == 3)
     {
         MVPmatrices mvpMatrices = { modelMat, viewMat, projMat };
@@ -447,8 +449,8 @@ void renderRayCast()
         m_drawScreenQuad->drawDeferred(m_programDeferred, m_gBuf, mvpMatrices, glm::vec2(m_viewportDim[viewID].x, m_viewportDim[viewID].y));
     }
     else
-        m_drawScreenQuad->drawRayCast(m_programRayCast, m_volTex, m_frontPosTex, m_backPosTex, m_lookupTex, 
-                                      projMat * viewMat * modelMat, glm::vec2(m_viewportDim[viewID].x, m_viewportDim[viewID].y), m_ui.transparency);
+        m_drawScreenQuad->drawRayCast(m_programRayCast, m_rayCasting, m_lookupTex, projMat * viewMat * modelMat, 
+                                      glm::vec2(m_viewportDim[viewID].x, m_viewportDim[viewID].y), m_ui.transparency);
 
     glDisable(GL_BLEND);
 
@@ -497,11 +499,11 @@ void renderSlices3D()
 
 
     MVPmatrices mvpMatrices = { modelMat * glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 0.0f, translA)), viewMat, projMat };
-    m_drawSliceA->drawSlice(m_programSlice, mvpMatrices, translMatA, m_volTex, m_lookupTex);
+    m_drawSliceA->drawSlice(m_programSlice, mvpMatrices, translMatA, m_rayCasting.volTex, m_lookupTex);
     mvpMatrices.modelMat = modelMat * glm::translate(glm::mat4(1.0), glm::vec3(0.0f, translC, 0.0f));
-    m_drawSliceC->drawSlice(m_programSlice, mvpMatrices, translMatC, m_volTex, m_lookupTex);
+    m_drawSliceC->drawSlice(m_programSlice, mvpMatrices, translMatC, m_rayCasting.volTex, m_lookupTex);
     mvpMatrices.modelMat = modelMat * glm::translate(glm::mat4(1.0), glm::vec3(translS, 0.0f, 0.0f));
-    m_drawSliceS->drawSlice(m_programSlice, mvpMatrices, translMatS, m_volTex, m_lookupTex);
+    m_drawSliceS->drawSlice(m_programSlice, mvpMatrices, translMatS, m_rayCasting.volTex, m_lookupTex);
 
 }
 
@@ -543,7 +545,7 @@ void renderSlice()
             glm::mat4 texMat = glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 0.0f, 1.0f - translA));
             glm::mat4 panMat = glm::translate(glm::mat4(1.0), m_translatA);
             MVPmatrices mvpMatrices = { panMat * modelMat, viewMat, projMat };
-            m_drawSliceA->drawSlice(m_programSlice, mvpMatrices, texMat, m_volTex, m_lookupTex);
+            m_drawSliceA->drawSlice(m_programSlice, mvpMatrices, texMat, m_rayCasting.volTex, m_lookupTex);
         }
         else if (i == 3 || (i == 0 && m_ui.mainViewOrient == 3))
         {
@@ -553,7 +555,7 @@ void renderSlice()
             glm::mat4 texMat = glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 1.0f - translC, 0.0f));
             glm::mat4 panMat = glm::translate(glm::mat4(1.0), m_translatC);
             MVPmatrices mvpMatrices = { panMat * modelMat, viewMat, projMat };
-            m_drawSliceC->drawSlice(m_programSlice, mvpMatrices, texMat, m_volTex, m_lookupTex);
+            m_drawSliceC->drawSlice(m_programSlice, mvpMatrices, texMat, m_rayCasting.volTex, m_lookupTex);
         }
         else if (i == 4 || (i == 0 && m_ui.mainViewOrient == 4))
         {
@@ -563,7 +565,7 @@ void renderSlice()
             glm::mat4 texMat = glm::translate(glm::mat4(1.0), glm::vec3(1.0f - translS, 0.0f, 0.0f));
             glm::mat4 panMat = glm::translate(glm::mat4(1.0), m_translatS);
             MVPmatrices mvpMatrices = { panMat * modelMat, viewMat, projMat };
-            m_drawSliceS->drawSlice(m_programSlice, mvpMatrices, texMat, m_volTex, m_lookupTex);
+            m_drawSliceS->drawSlice(m_programSlice, mvpMatrices, texMat, m_rayCasting.volTex, m_lookupTex);
         }
         
     }
@@ -857,7 +859,7 @@ void cursorPosCallback(GLFWwindow* window, double x, double y)
 
 void runGUI()
 {
-    GUI(m_ui, *m_volume, m_volTex, *m_drawScreenQuad, *m_drawSliceA, *m_drawSliceC, *m_drawSliceS);
+    GUI(m_ui, *m_volume, m_rayCasting.volTex, *m_drawScreenQuad, *m_drawSliceA, *m_drawSliceC, *m_drawSliceS);
 }
 
 int main(int argc, char** argv)
