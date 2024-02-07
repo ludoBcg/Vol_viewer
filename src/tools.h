@@ -530,29 +530,29 @@ namespace
     /*!
     * \fn buildScreenFBOandTex
     * \brief Generate a FBO and attach a texture to its color output (used for various screen texture generation)
-    * \param _screenFBO : pointer to id of FBO to generate
-    * \param _screenTex : pointer to id of texture to generate
+    * \param _screenFBO : reference to id of FBO to generate
+    * \param _screenTex : reference to id of texture to generate
     * \param _texWidth : texture width
     * \param _texHeight : texture height
     */
-    void buildScreenFBOandTex(GLuint* _screenFBO, GLuint* _screenTex, unsigned int _texWidth, unsigned int _texHeight)
+    void buildScreenFBOandTex(GLuint& _screenFBO, GLuint& _screenTex, unsigned int _texWidth, unsigned int _texHeight)
     {
 
         // generate FBO 
-        glGenFramebuffers(1, _screenFBO);
+        glGenFramebuffers(1, &_screenFBO);
 
         // generate texture
-        glGenTextures(1, _screenTex);
-        glBindTexture(GL_TEXTURE_2D, *_screenTex);
+        glGenTextures(1, &_screenTex);
+        glBindTexture(GL_TEXTURE_2D, _screenTex);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _texWidth, _texHeight, 0, GL_RGBA, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         // bind FBO
-        glBindFramebuffer(GL_FRAMEBUFFER, *_screenFBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, _screenFBO);
 
         // attach textures to color output of the FBO
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, *_screenTex, 0);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, _screenTex, 0);
 
 
         // create and attach depth buffer (renderbuffer) to handle polygon occlusion properly (for 3D geometry rendering)
@@ -576,11 +576,11 @@ namespace
     * \fn build1DTex
     * \brief Create a 1D texture and writes data into it using a normal distribution / Gaussian ft (used to build transfer functions).
     * This texture is a lookup table / palette for 8b volume rendering, therefore the width is always 256
-    * \param _1dTex : pointer to id of texture to generate
+    * \param _1dTex : reference to id of texture to generate
     * \param _mean : mean value of the Gaussian
     * \param _radius : half-width of the Gaussian (= 2*std deviation, we consider the area that covers 95.45% of total integral)
     */
-    void build1DTex(GLuint* _1dTex, unsigned int _mean, unsigned int _radius)
+    void build1DTex(GLuint& _1dTex, unsigned int _mean, unsigned int _radius)
     {
         // create array of 256 values, sampled from a Gaussian curve
         float sigma = _radius * 0.5f; // std dev
@@ -595,8 +595,8 @@ namespace
         }
 
         // generate 1D texture
-        glGenTextures(1, _1dTex);
-        glBindTexture(GL_TEXTURE_1D, *_1dTex);
+        glGenTextures(1, &_1dTex);
+        glBindTexture(GL_TEXTURE_1D, _1dTex);
         glTexImage1D(GL_TEXTURE_1D, 0, GL_R8, 256, 0, GL_RED, GL_FLOAT, &gaussValues[0]);
         glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -609,19 +609,19 @@ namespace
     /*!
     * \fn build3DTex
     * \brief Create a 3D texture and copy volume data into it.
-    * \param _volTex : pointer to id of texture to generate
+    * \param _volTex : reference to id of texture to generate
     * \param _vol : 3D image data (i.e., volume)
     * \param _useNearest : flag to indicate if texture uses GL_NEAREST param (if not, uses GL_LINEAR by default)
     */
-    void build3DTex(GLuint* _volTex, VolumeBase<std::uint8_t>* _vol, bool _useNearest = false)
+    void build3DTex(GLuint& _volTex, VolumeBase<std::uint8_t>* _vol, bool _useNearest = false)
     {
         GLint param;
         _useNearest ? param = GL_NEAREST : param = GL_LINEAR;
         //_useNearest ? param = GL_NEAREST_MIPMAP_NEAREST : param = GL_LINEAR_MIPMAP_NEAREST;
 
         // generate 3D texture
-        glGenTextures(1, _volTex);
-        glBindTexture(GL_TEXTURE_3D, *_volTex);
+        glGenTextures(1, &_volTex);
+        glBindTexture(GL_TEXTURE_3D, _volTex);
         glTexImage3D(GL_TEXTURE_3D, 0, GL_R8, _vol->getDimensions().x, _vol->getDimensions().y, _vol->getDimensions().z, 0, GL_RED, GL_UNSIGNED_BYTE, _vol->getFront());
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
@@ -726,17 +726,15 @@ namespace
     * \fn buildGbuffFBOandTex
     * \brief Generate a FBO and attach textures to 2 color outputs (used for G-buffer textures generation)
     *        Use a renderbuffer to handle depth buffering
-    * \param _gFBO : pointer to id of FBO to generate
-    * \param _gPosition : pointer to id of texture to generate for 1st color output
-    * \param _gNormal : pointer to id of texture to generate for 2nd color output
-    * \param _gColor : pointer to id of texture to generate for 3rd color output
+    * \param _gFBO : reference to id of FBO to generate
+    * \param _gBufferTex : reference to G-buffer (i.e., 3 color outputs for position, normal, and color)
     * \param _texWidth : texture width
     * \param _texHeight : texture height
     */
-    void buildGbuffFBOandTex(GLuint* _gFBO, Gbuffer& _gBufferTex, unsigned int _texWidth, unsigned int _texHeight)
+    void buildGbuffFBOandTex(GLuint& _gFBO, Gbuffer& _gBufferTex, unsigned int _texWidth, unsigned int _texHeight)
     {
         // generate FBO 
-        glGenFramebuffers(1, _gFBO);
+        glGenFramebuffers(1, &_gFBO);
 
         // 1st texture (position buffer)
         glGenTextures(1, &_gBufferTex.posTex);
@@ -761,7 +759,7 @@ namespace
 
 
         // bind FBO
-        glBindFramebuffer(GL_FRAMEBUFFER, *_gFBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, _gFBO);
 
         // attach textures to different color outputs of the FBO
         glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, _gBufferTex.posTex, 0);

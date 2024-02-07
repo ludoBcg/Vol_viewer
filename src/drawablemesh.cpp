@@ -350,18 +350,18 @@ void DrawableMesh::drawDeferred(GLuint _program, Gbuffer _gBufferTex, MVPmatrice
 }
 
 
-void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, 
+void DrawableMesh::drawRayCast(GLuint _program, RayCasting& _rayCastTex, GLuint _1dTex,
                                glm::mat4 _mvpMat, glm::vec2 _screenDims, float _transparency)
 {
     glUseProgram(_program);
 
     // bind textures
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_3D, _3dTex);
+    glBindTexture(GL_TEXTURE_3D, _rayCastTex.volTex);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _frontTex);
+    glBindTexture(GL_TEXTURE_2D, _rayCastTex.frontPosTex);
     glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, _backTex);
+    glBindTexture(GL_TEXTURE_2D, _rayCastTex.backPosTex);
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, m_noiseTex);
     glActiveTexture(GL_TEXTURE4);
@@ -394,18 +394,18 @@ void DrawableMesh::drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex,
 }
 
 
-void DrawableMesh::drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, 
+void DrawableMesh::drawIsoSurf(GLuint _program, RayCasting& _rayCastTex, GLuint _1dTex,
                                GLuint _isoValue, MVPmatrices _mvpMatrices, glm::vec3 _lightDir, glm::vec2 _screenDims)
 {
     glUseProgram(_program);
 
     // bind textures
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_3D, _3dTex);
+    glBindTexture(GL_TEXTURE_3D, _rayCastTex.volTex);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _frontTex);
+    glBindTexture(GL_TEXTURE_2D, _rayCastTex.frontPosTex);
     glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, _backTex);
+    glBindTexture(GL_TEXTURE_2D, _rayCastTex.backPosTex);
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, m_perlinTex);
 
@@ -438,7 +438,8 @@ void DrawableMesh::drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex,
 }
 
 
-void DrawableMesh::drawSlice(GLuint _program, MVPmatrices _mvpMatrices, glm::mat4 _tex3dMat, GLuint _3dTex, GLuint _1dTex)
+//void DrawableMesh::drawSlice(GLuint _program, MVPmatrices _mvpMatrices, glm::mat4 _tex3dMat, GLuint _3dTex, GLuint _1dTex)
+void DrawableMesh::drawSlice(GLuint _program, MVPmatrices _mvpMatrices, glm::mat4 _tex3dMat, GLuint& _3dTex, GLuint _1dTex)
 {
     // Activate program
     glUseProgram(_program);

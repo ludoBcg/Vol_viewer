@@ -149,29 +149,25 @@ class DrawableMesh
         * \fn drawRayCast
         * \brief Performs ray-casting
         * \param _program : shader program
-        * \param _3dTex : 3D texture with volume data
-        * \param _frontTex : 2D texture with front face color rendering of bounding geometry
-        * \param _backTex : 2D texture with back face color rendering of bounding geometry
+        * \param _rayCastTex: reference to ray-casting set of textures (i.e., 3D texture with volume data + 2d textures for front and back face color rendering of bounding geometry)
         * \param _1dTex : 1D texture for transfer function (i.e., lookup table)
         * \param _mvpMat : MVP matrix
         */
-        void drawRayCast(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, 
+        void drawRayCast(GLuint _program, RayCasting& _rayCastTex, GLuint _1dTex,
                          glm::mat4 _mvpMat, glm::vec2 _screenDims, float _transparency);
 
         /*!
         * \fn drawIsoSurf
         * \brief Performs ray-casting for iso-surface rendering
         * \param _program : shader program
-        * \param _3dTex : 3D texture with volume data
-        * \param _frontTex : 2D texture with front face color rendering of bounding geometry
-        * \param _backTex : 2D texture with back face color rendering of bounding geometry
+        * \param _rayCastTex: reference to ray-casting set of textures (i.e., 3D texture with volume data + 2d textures for front and back face color rendering of bounding geometry)
         * \param _1dTex : 1D texture for transfer function (i.e., lookup table)
         * \param _isoValue: threshold value defining isosurface
         * \param _mvpMatrices : Model, View, and Projection matrices
         * \param _lightDir : light direction
         * \param _screenDims : current dimensions of screen 
         */
-        void drawIsoSurf(GLuint _program, GLuint _3dTex, GLuint _frontTex, GLuint _backTex, GLuint _1dTex, 
+        void drawIsoSurf(GLuint _program, RayCasting& _rayCastTex, GLuint _1dTex,
                          GLuint _isoValue, MVPmatrices _mvpMatrices, glm::vec3 _lightDir, glm::vec2 _screenDims);
 
         /*!
@@ -183,7 +179,8 @@ class DrawableMesh
         * \param _3dTex : 3D texture with volume data
         * \param _1dTex : 1D texture for transfer function (i.e., lookup table)
         */
-        void drawSlice(GLuint _program, MVPmatrices _mvpMatrices, glm::mat4 _tex3dMat, GLuint _3dTex, GLuint _1dTex);
+        void drawSlice(GLuint _program, MVPmatrices _mvpMatrices, glm::mat4 _tex3dMat, GLuint& _3dTex, GLuint _1dTex);
+
 
     protected:
 
