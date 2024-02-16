@@ -37,23 +37,23 @@
 
 struct Gbuffer
 {
-    GLuint colTex;
-    GLuint normTex;
-    GLuint posTex;
+    GLuint colTex = 0;      /*!< G-buffer color screen-textures */
+    GLuint normTex = 0;     /*!< G-buffer normal screen-texture */
+    GLuint posTex = 0;      /*!< G-buffer position screen-texture */
 };
 
 struct RayCasting
-{
-    GLuint frontPosTex;
-    GLuint backPosTex;
-    GLuint volTex;
+{          
+    GLuint frontPosTex = 0; /*!< Front face bounding geometry position screen-texture */
+    GLuint backPosTex = 0;  /*!< Back face bounding geometry position screen-texture */
+    GLuint volTex = 0;      /*!< Volume 3D texture */
 };
 
 struct MVPmatrices
 {
-    glm::mat4 modelMat;
-    glm::mat4 viewMat;
-    glm::mat4 projMat;
+    glm::mat4 modelMat = glm::mat4(1.0);
+    glm::mat4 viewMat = glm::mat4(1.0);
+    glm::mat4 projMat = glm::mat4(1.0);
 };
 
 
