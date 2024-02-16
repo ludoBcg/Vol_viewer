@@ -439,9 +439,9 @@ void renderRayCast()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     if (m_ui.showFrontTex)
-        m_drawScreenQuad->drawScreenQuad(m_programQuad, m_rayCasting.frontPosTex, false);
+        m_drawScreenQuad->drawScreenQuad(m_programQuad, m_rayCasting.frontPosTex);
     else if (m_ui.showBackTex)
-        m_drawScreenQuad->drawScreenQuad(m_programQuad, m_rayCasting.backPosTex, false);
+        m_drawScreenQuad->drawScreenQuad(m_programQuad, m_rayCasting.backPosTex);
     else if (m_ui.VRmode == 3)
     {
         MVPmatrices mvpMatrices = { modelMat, viewMat, projMat };

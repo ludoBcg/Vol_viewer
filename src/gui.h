@@ -26,7 +26,7 @@
 std::string dataDir = "../../data/";         /*!< relative path to img files folder  */
 
 struct UI {
-    int mainViewOrient = 1; /*! Defines which type of view is in main view (1=3D, 2=A, 3=C, 4=S) */
+    int mainViewOrient = 1;            /*! Defines which type of view is in main view (1=3D, 2=A, 3=C, 4=S) */
     glm::vec3 backColor = glm::vec3(0.5f, 0.5f, 0.5f); /*!< background color */
     bool isBackgroundWhite = false;   /*!< background color flag */
     bool isGammaCorrecOn = false;     /*!< Gamma correction flag */
@@ -42,8 +42,7 @@ struct UI {
     int sliceIdA;                     /*! ID of the Axial slice to visualize*/
     int sliceIdC;                     /*! ID of the Coronal slice to visualize*/
     int sliceIdS;                     /*! ID of the Sagittal slice to visualize*/
-    std::string fileName;
-    char current_file[256] = {};
+    char fileName[256] = {};          /*! name of file to load */
     int isoValue = 127;               /*! threshold isosurface rendering */
     float transparency = 0.02f;       /*! opacity factor for alpha blending */
 };
@@ -84,15 +83,12 @@ void GUI( UI& _ui,
 
         // filename
         ImGui::Text("File Name: ");
-        if (ImGui::InputText(" ", _ui.current_file, sizeof(_ui.current_file)))
-        {
-            _ui.fileName = std::string(_ui.current_file);
-        }
+        ImGui::InputText(" ", _ui.fileName, sizeof(_ui.fileName));
 
         // import
         if (ImGui::Button("Load"))
         {
-            loadFile(dataDir + _ui.fileName, _volume, _volTex);
+            loadFile(dataDir + std::string(_ui.fileName), _volume, _volTex);
 
             _drawScreenQuad.setMaxSteps(glm::length(glm::vec3((float)_volume.getDimensions().x,
                                                               (float)_volume.getDimensions().y,

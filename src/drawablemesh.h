@@ -121,18 +121,15 @@ class DrawableMesh
         * \param _program : shader program
         * \param _mvpMatrices : Model, View, and Projection matrices
         */
-        void drawBoundingGeom(GLuint _program, MVPmatrices _mvpMatrices);
+        void drawBoundingGeom(GLuint _program, MVPmatrices& _mvpMatrices);
 
         /*!
         * \fn drawScreenQuad
         * \brief Draw the screen quad, mapped with a given texture
         * \param _program : shader program
         * \param _tex : texture to map on the screen quad 
-        * \param _isBlurOn : true to activate Gaussian blur
-        * \param _isGaussH : true for horizontal blur, false for vertical blur
-        * \param _filterWidth : Guassian fildter width
         */
-        void drawScreenQuad(GLuint _program, GLuint _tex, bool _isBlurOn, bool _isGaussH = true, int _filterWidth = 0 );
+        void drawScreenQuad(GLuint _program, GLuint _tex);
 
         /*!
         * \fn drawDeferred
@@ -142,7 +139,7 @@ class DrawableMesh
         * \param _mvpMatrices : Model, View, and Projection matrices
         * \param _screenDims : current dimensions of screen 
         */
-        void drawDeferred(GLuint _program, Gbuffer _gBufferTex, MVPmatrices _mvpMatrices, glm::vec2 _screenDims);
+        void drawDeferred(GLuint _program, Gbuffer _gBufferTex, MVPmatrices& _mvpMatrices, glm::vec2 _screenDims);
 
 
         /*!
@@ -168,7 +165,7 @@ class DrawableMesh
         * \param _screenDims : current dimensions of screen 
         */
         void drawIsoSurf(GLuint _program, RayCasting& _rayCastTex, GLuint _1dTex,
-                         GLuint _isoValue, MVPmatrices _mvpMatrices, glm::vec3 _lightDir, glm::vec2 _screenDims);
+                         GLuint _isoValue, MVPmatrices& _mvpMatrices, glm::vec3 _lightDir, glm::vec2 _screenDims);
 
         /*!
         * \fn drawSlice
@@ -179,7 +176,7 @@ class DrawableMesh
         * \param _3dTex : 3D texture with volume data
         * \param _1dTex : 1D texture for transfer function (i.e., lookup table)
         */
-        void drawSlice(GLuint _program, MVPmatrices _mvpMatrices, glm::mat4 _tex3dMat, GLuint& _3dTex, GLuint _1dTex);
+        void drawSlice(GLuint _program, MVPmatrices& _mvpMatrices, glm::mat4 _tex3dMat, GLuint& _3dTex, GLuint _1dTex);
 
 
     protected:

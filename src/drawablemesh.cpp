@@ -251,7 +251,7 @@ void DrawableMesh::createSliceVAO(unsigned int _orientation)
 }
 
 
-void DrawableMesh::drawBoundingGeom(GLuint _program, MVPmatrices _mvpMatrices)
+void DrawableMesh::drawBoundingGeom(GLuint _program, MVPmatrices& _mvpMatrices)
 {
     // Activate program
     glUseProgram(_program);
@@ -274,7 +274,7 @@ void DrawableMesh::drawBoundingGeom(GLuint _program, MVPmatrices _mvpMatrices)
 }
 
 
-void DrawableMesh::drawScreenQuad(GLuint _program, GLuint _tex, bool _isBlurOn, bool _isGaussH, int _filterWidth)
+void DrawableMesh::drawScreenQuad(GLuint _program, GLuint _tex)
 {
 
     // Activate program
@@ -305,7 +305,7 @@ void DrawableMesh::drawScreenQuad(GLuint _program, GLuint _tex, bool _isBlurOn, 
 }
 
 
-void DrawableMesh::drawDeferred(GLuint _program, Gbuffer _gBufferTex, MVPmatrices _mvpMatrices, glm::vec2 _screenDims)
+void DrawableMesh::drawDeferred(GLuint _program, Gbuffer _gBufferTex, MVPmatrices& _mvpMatrices, glm::vec2 _screenDims)
 {
 
     // Activate program
@@ -395,7 +395,7 @@ void DrawableMesh::drawRayCast(GLuint _program, RayCasting& _rayCastTex, GLuint 
 
 
 void DrawableMesh::drawIsoSurf(GLuint _program, RayCasting& _rayCastTex, GLuint _1dTex,
-                               GLuint _isoValue, MVPmatrices _mvpMatrices, glm::vec3 _lightDir, glm::vec2 _screenDims)
+                               GLuint _isoValue, MVPmatrices& _mvpMatrices, glm::vec3 _lightDir, glm::vec2 _screenDims)
 {
     glUseProgram(_program);
 
@@ -438,8 +438,7 @@ void DrawableMesh::drawIsoSurf(GLuint _program, RayCasting& _rayCastTex, GLuint 
 }
 
 
-//void DrawableMesh::drawSlice(GLuint _program, MVPmatrices _mvpMatrices, glm::mat4 _tex3dMat, GLuint _3dTex, GLuint _1dTex)
-void DrawableMesh::drawSlice(GLuint _program, MVPmatrices _mvpMatrices, glm::mat4 _tex3dMat, GLuint& _3dTex, GLuint _1dTex)
+void DrawableMesh::drawSlice(GLuint _program, MVPmatrices& _mvpMatrices, glm::mat4 _tex3dMat, GLuint& _3dTex, GLuint _1dTex)
 {
     // Activate program
     glUseProgram(_program);
