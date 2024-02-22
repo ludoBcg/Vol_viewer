@@ -11,9 +11,11 @@ uniform sampler3D u_volumeTexture;
 uniform sampler2D u_backFaceTexture;
 uniform sampler2D u_frontFaceTexture;
 uniform sampler2D u_perlinTex;
+uniform sampler1D u_lookupTexture;
 uniform bool u_useGammaCorrec;
 uniform bool u_useShadow;
 uniform bool u_useJitter;
+uniform int u_useTF;
 uniform int u_maxSteps;
 uniform float u_isoValue;
 uniform vec3 u_lightDir;
@@ -173,8 +175,12 @@ vec3 N = normalize(normal);
 		// normal in view space to write in B-buffer
 		vec4 Nreturn = normalize(mat4(u_matV * u_matM) * vec4(normal.xyz, 1.0));
 		
+		// read color from TF
+		vec3 material = texture(u_lookupTexture, intensity).rgb * u_useTF
+						+ vec3(0.9, 0.9, 0.9) * (1 - u_useTF);
+
 		// Blinn-Phong illumination
-		vec3 diffuseColor = vec3(0.9, 0.9, 0.9) * max(0.0, dot(N, L));
+		vec3 diffuseColor = material * max(0.0, dot(N, L));
 		vec3 ambientColor = vec3(0.1, 0.1, 0.1);
 
 		if(u_useShadow)

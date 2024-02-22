@@ -5,10 +5,11 @@
 uniform sampler3D u_volumeTexture;
 uniform sampler2D u_backFaceTexture;
 uniform sampler2D u_frontFaceTexture;
-uniform sampler1D u_lookupTexture;
 uniform sampler2D u_perlinTex;
+uniform sampler1D u_lookupTexture;
 uniform bool u_useJitter;
 uniform bool u_useGammaCorrec;
+uniform int u_useTF;
 uniform int u_modeVR; // MIP = 1, alpha blending = 2
 uniform int u_maxSteps;
 uniform mat4 u_matMVP;
@@ -83,7 +84,11 @@ void main()
 
 		accumMIP = max(accumMIP, vec4(intensity, intensity, intensity, 1.0));
 
-		vec4 tfColor = vec4(intensity, intensity, intensity, intensity);
+		// read color from TF
+		vec3 material = texture(u_lookupTexture, intensity).rgb * u_useTF
+								+ vec3(intensity, intensity, intensity) * (1 - u_useTF);
+
+		vec4 tfColor = vec4(material.rgb, intensity);
 		tfColor.a = clamp(1.0 * intensity, 0.0, 1.0);
 		tfColor.a *= stepSize / u_transparency; // reduce the alpha when you accumulate too many layers
 		accumAB.rgb += (tfColor.rgb * tfColor.a) * (1.0 - accumAB.a); // accumulate color (ponderated by reduced alpha) with a decreasing weight
@@ -98,6 +103,8 @@ void main()
 		color.rgba += accumAB;
 
 	color.a = 1.0;
+
+	//color.rgb = texture(u_lookupTexture, color.r).rgb;
 
 	if(u_useGammaCorrec)
 		color.rgb = linearToGamma(color.rgb);
