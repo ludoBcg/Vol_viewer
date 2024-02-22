@@ -176,6 +176,7 @@ vec3 N = normalize(normal);
 		vec4 Nreturn = normalize(mat4(u_matV * u_matM) * vec4(normal.xyz, 1.0));
 		
 		// read color from TF
+		intensity = texture(u_volumeTexture, pos + stepSize * (-1 * N)).r;
 		vec3 material = texture(u_lookupTexture, intensity).rgb * u_useTF
 						+ vec3(0.9, 0.9, 0.9) * (1 - u_useTF);
 

@@ -27,6 +27,7 @@ DrawableMesh::DrawableMesh()
     m_useAO = false;
     m_useShadow = false;
     m_useJitter = false;
+    m_useTF = 0;
 }
 
 
