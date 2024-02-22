@@ -33,6 +33,7 @@ struct UI {
     bool isAOOn = false;              /*!< Ambient Occlusion flag */
     bool isShadowOn = false;          /*!< Shadows flag */
     bool isJitterOn = false;          /*!< Jittering flag */
+    bool useTF = false;          /*!< use Transfer Function flag */
     bool showFrontTex = false;        /*! Show front face texture of the bounding geometry*/
     bool showBackTex = false;         /*! Show back face texture of the bounding geometry*/
     bool singleView = true;           /*! Split screen or not*/
@@ -156,6 +157,10 @@ void GUI( UI& _ui,
                         if (ImGui::Checkbox("Jitter", &_ui.isJitterOn))
                         {
                             _drawScreenQuad.setUseJitterFlag(_ui.isJitterOn);
+                        }
+                        if (ImGui::Checkbox("TF", &_ui.useTF))
+                        {
+                            _drawScreenQuad.setUseTFFlag(_ui.useTF);
                         }
                     }
                 }

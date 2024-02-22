@@ -197,7 +197,7 @@ void initialize()
     
 
     // build transfer function
-    build1DTex(m_lookupTex, 100, 80);
+    build1DTex(m_lookupTex);
 
     buildRandKernel(m_randKernel);
     buildKernelRot(m_noiseTex);
