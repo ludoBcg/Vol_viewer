@@ -574,30 +574,32 @@ namespace
 
     /*!
     * \fn build1DTex
-    * \brief Create a 1D texture and writes data into it using a normal distribution / Gaussian ft (used to build transfer functions).
+    * \brief Creates a 1D texture 
     * This texture is a lookup table / palette for 8b volume rendering, therefore the width is always 256
     * \param _1dTex : reference to id of texture to generate
-    * \param _mean : mean value of the Gaussian
-    * \param _radius : half-width of the Gaussian (= 2*std deviation, we consider the area that covers 95.45% of total integral)
     */
-    void build1DTex(GLuint& _1dTex, unsigned int _mean, unsigned int _radius)
+    void build1DTex(GLuint& _1dTex)
     {
-        // create array of 256 values, sampled from a Gaussian curve
-        float sigma = _radius * 0.5f; // std dev
-        float factor = 1.0f / (float)(1.0f / (sigma * sqrt(2.0f * M_PI)) * exp(-1.0f * pow((float)_mean - (float)_mean, 2) / (2.0f * sigma * sigma)));
-
-        std::vector<float> gaussValues;
+        // create array of 256 values,
+        std::vector<glm::vec4> values;
         for (unsigned int i = 0; i < 256; i++)
         {
-            float val = 1.0f / (float)(sigma * sqrt(2.0f * M_PI) * exp(-1.0f * pow((float)i - (float)_mean, 2) / (2.0f * sigma * sigma)));
-
-            gaussValues.push_back(val * factor);
+            if (i > 200)     // implants
+                values.push_back(glm::vec4(0.8, 0.8, 0.8, 1.0));
+            else if (i > 95) // bone
+                values.push_back(glm::vec4(0.97, 0.93, 0.78, 1.0));
+            else if (i > 65) // soft tissue
+                values.push_back(glm::vec4(0.8, 0.09, 0.0, 1.0));
+            else if (i > 15) // skin
+                values.push_back(glm::vec4(0.97, 0.82, 0.7, 1.0));
+            else             // other
+                values.push_back(glm::vec4(0.9, 0.9, 0.9, 1.0));
         }
 
         // generate 1D texture
         glGenTextures(1, &_1dTex);
         glBindTexture(GL_TEXTURE_1D, _1dTex);
-        glTexImage1D(GL_TEXTURE_1D, 0, GL_R8, 256, 0, GL_RED, GL_FLOAT, &gaussValues[0]);
+        glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA16F, 256, 0, GL_RGBA, GL_FLOAT, &values[0]);
         glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
