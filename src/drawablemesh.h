@@ -76,6 +76,8 @@ class DrawableMesh
         inline void setNoiseTex(GLuint _noiseTex) { m_noiseTex = _noiseTex; }
         /*! \fn setPerlinTex */
         inline void setPerlinTex(GLuint _perlinTex) { m_perlinTex = _perlinTex; }
+        /*! \fn setAmbientCol */
+        inline void setAmbientCol(glm::vec3 _ambientCol) { m_ambientCol = _ambientCol; }
 
         /*! \fn getUseGammaCorrecFlag */
         inline bool getUseGammaCorrecFlag() { return m_useGammaCorrec; }
@@ -169,7 +171,8 @@ class DrawableMesh
         * \param _screenDims : current dimensions of screen 
         */
         void drawIsoSurf(GLuint _program, RayCasting& _rayCastTex, GLuint _1dTex,
-                         GLuint _isoValue, MVPmatrices& _mvpMatrices, glm::vec3 _lightDir, glm::vec2 _screenDims);
+                         GLuint _isoValue, MVPmatrices& _mvpMatrices, glm::vec3 _lightDir, 
+                         glm::vec2 _screenDims, float _transparency);
 
         /*!
         * \fn drawSlice
@@ -204,7 +207,7 @@ class DrawableMesh
         unsigned int m_numIndices;  /*!< number of indices in the index VBO */
 
         bool m_useGammaCorrec;      /*!< flag to apply gamma correction or not */
-        int m_modeVR;               /*!< VR mode (1 = MIP, 2 = alpha blending, 3 = custom)*/
+        int m_modeVR;               /*!< VR mode (1 = MIP, 2 = alpha blending, 3 = isusurface, 4 = hybrid)*/
         int m_maxSteps;             /*!< max nb of steps for ray-casting (= diagonal length of volume box)*/
 
         bool m_vertexProvided;      /*!< flag to indicate if vertex coords are available or not */
@@ -221,6 +224,7 @@ class DrawableMesh
         GLuint m_noiseTex;          /*!< index of noise texture */
         GLuint m_perlinTex;         /*!< index of perlin noise texture */
         std::vector<glm::vec3> m_randKernel;
+        glm::vec3 m_ambientCol;     /*!< color used for ambient lighting and shadows */
 
         /*------------------------------------------------------------------------------------------------------------+
         |                                                   MISC                                                      |

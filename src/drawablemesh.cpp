@@ -28,6 +28,8 @@ DrawableMesh::DrawableMesh()
     m_useShadow = false;
     m_useJitter = false;
     m_useTF = 0;
+
+    setAmbientCol(glm::vec3(0.1f, 0.1f, 0.1f));
 }
 
 
@@ -337,6 +339,7 @@ void DrawableMesh::drawDeferred(GLuint _program, Gbuffer _gBufferTex, MVPmatrice
     glUniformMatrix4fv(glGetUniformLocation(_program, "u_matP"), 1, GL_FALSE, &_mvpMatrices.projMat[0][0]);
     glUniform1i(glGetUniformLocation(_program, "u_useAO"), m_useAO);
     glUniform2fv(glGetUniformLocation(_program, "u_screenDims"), 1, &_screenDims[0]);
+    glUniform3fv(glGetUniformLocation(_program, "u_ambientColor"), 1, &m_ambientCol[0]);
 
 
     glBindVertexArray(m_meshVAO);                       // bind the VAO
@@ -400,7 +403,8 @@ void DrawableMesh::drawRayCast(GLuint _program, RayCasting& _rayCastTex, GLuint 
 
 
 void DrawableMesh::drawIsoSurf(GLuint _program, RayCasting& _rayCastTex, GLuint _1dTex,
-                               GLuint _isoValue, MVPmatrices& _mvpMatrices, glm::vec3 _lightDir, glm::vec2 _screenDims)
+                               GLuint _isoValue, MVPmatrices& _mvpMatrices, glm::vec3 _lightDir, 
+                               glm::vec2 _screenDims, float _transparency)
 {
     glUseProgram(_program);
 
@@ -433,7 +437,8 @@ void DrawableMesh::drawIsoSurf(GLuint _program, RayCasting& _rayCastTex, GLuint 
     glUniform1i(glGetUniformLocation(_program, "u_useJitter"), m_useJitter);
     glUniform1i(glGetUniformLocation(_program, "u_useTF"), m_useTF);
     glUniform2fv(glGetUniformLocation(_program, "u_screenDims"), 1, &_screenDims[0]);
-
+    glUniform3fv(glGetUniformLocation(_program, "u_ambientColor"), 1, &m_ambientCol[0]);
+    glUniform1f(glGetUniformLocation(_program, "u_transparency"), _transparency);
 
     // Draw!
     glBindVertexArray(m_meshVAO);                       // bind the VAO
