@@ -13,6 +13,7 @@ uniform mat4 u_matV;
 uniform mat4 u_matP;
 uniform bool u_useAO;
 uniform vec2 u_screenDims;
+uniform vec3 u_ambientColor;
 	
 // INPUT	
 in vec3 vert_uv;
@@ -81,7 +82,6 @@ float compAO()
 // MAIN
 void main()
 {
-
 	// final color
 	vec4 color = vec4(1.0f);
 	color = texture(u_colorTex, vert_uv.xy);
@@ -91,7 +91,8 @@ void main()
 	if (u_useAO)
 	{
 		float AO = compAO();
-		color.rgb *= AO;
+		// interpolate between ambient color and current color, using AO factor
+		color.rgb = mix(u_ambientColor, color.rgb, AO);
 	}
 
 	frag_color = color;

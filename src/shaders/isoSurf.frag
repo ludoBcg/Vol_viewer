@@ -23,6 +23,7 @@ uniform mat4 u_matM;
 uniform mat4 u_matV;
 uniform mat4 u_matP;
 uniform vec2 u_screenDims;
+uniform vec3 u_ambientColor;
 
 
 in vec2 v_texcoord;
@@ -61,6 +62,22 @@ vec3 interval_bisection(vec3 ray_position, vec3 ray_direction, float _stepSize)
 	}
 
 	return (start + end) / 2.0;
+}
+
+
+// Find highest intensity value in 6-voxel neigborhood
+float maxNbhVal(in sampler3D image, in vec3 pos)
+{
+	float maxVal = texture(image, pos).r;
+
+	maxVal = max(maxVal, textureOffset(image, pos, ivec3(1, 0, 0)).r);
+	maxVal = max(maxVal, textureOffset(image, pos, -ivec3(1, 0, 0)).r);
+	maxVal = max(maxVal, textureOffset(image, pos, ivec3(0, 1, 0)).r);
+	maxVal = max(maxVal, textureOffset(image, pos, -ivec3(0, 1, 0)).r);
+	maxVal = max(maxVal, textureOffset(image, pos, ivec3(0, 0, 1)).r);
+	maxVal = max(maxVal, textureOffset(image, pos, -ivec3(0, 0, 1)).r);
+
+	return maxVal;
 }
 
 
@@ -175,19 +192,21 @@ vec3 N = normalize(normal);
 		// normal in view space to write in B-buffer
 		vec4 Nreturn = normalize(mat4(u_matV * u_matM) * vec4(normal.xyz, 1.0));
 		
-		// read color from TF
-		intensity = texture(u_volumeTexture, pos + stepSize * (-1 * N)).r;
+		// read intensity from image (add on step along gradient direction)
+		intensity = maxNbhVal(u_volumeTexture, pos + stepSize * (-1 * N));
+
+		// read corresponding color from TF
 		vec3 material = texture(u_lookupTexture, intensity).rgb * u_useTF
 						+ vec3(0.9, 0.9, 0.9) * (1 - u_useTF);
 
+
 		// Blinn-Phong illumination
 		vec3 diffuseColor = material * max(0.0, dot(N, L));
-		vec3 ambientColor = vec3(0.1, 0.1, 0.1);
 
 		if(u_useShadow)
 			diffuseColor *= (1.0 - shadowRay(pos, L, rayDir, stepSize) );
 
-		color.rgb = diffuseColor + ambientColor;
+		color.rgb = diffuseColor + u_ambientColor;
 		color.a = 1.0;
 
 		// write model space position coords into G-buffer
