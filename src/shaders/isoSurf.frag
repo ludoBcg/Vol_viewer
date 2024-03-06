@@ -186,8 +186,8 @@ void main()
 		vec3 normal = normalize(-imageGradient(u_volumeTexture, pos));
 
 		// normal in img space used for lighting
-//		vec3 N = normalize(mat3(matMVP) * normal);
-vec3 N = normalize(normal);
+		//vec3 N = normalize(mat3(matMVP) * normal);
+		vec3 N = normalize(normal);
 
 		// normal in view space to write in B-buffer
 		vec4 Nreturn = normalize(mat4(u_matV * u_matM) * vec4(normal.xyz, 1.0));
@@ -198,7 +198,6 @@ vec3 N = normalize(normal);
 		// read corresponding color from TF
 		vec3 material = texture(u_lookupTexture, intensity).rgb * u_useTF
 						+ vec3(0.9, 0.9, 0.9) * (1 - u_useTF);
-
 
 		// Blinn-Phong illumination
 		vec3 diffuseColor = material * max(0.0, dot(N, L));
@@ -217,7 +216,6 @@ vec3 N = normalize(normal);
 		gNormal = vec4(Nreturn.xyz, 1.0);
 
 	}
-
 
 	if(u_useGammaCorrec)
 		color.rgb = linearToGamma(color.rgb);

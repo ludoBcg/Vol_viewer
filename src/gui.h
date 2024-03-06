@@ -38,7 +38,7 @@ struct UI {
     bool showBackTex = false;         /*! Show back face texture of the bounding geometry*/
     bool singleView = true;           /*! Split screen or not*/
     bool VR = false;                  /*! Show VolumeRendering view or not (3D slices)*/
-    int VRmode = 1;                   /*! Use MIP (1) or alpha blending (2) or custom (3) mode for VR*/
+    int VRmode = 1;                   /*! Use MIP (1), alpha blending (2), isosurface (3), or hybrid (4) mode for VR*/
     bool useTexNearest = false;       /*! flag to indicate if texture uses GL_NEAREST param (if not, uses GL_LINEAR by default)*/
     int sliceIdA;                     /*! ID of the Axial slice to visualize*/
     int sliceIdC;                     /*! ID of the Coronal slice to visualize*/
@@ -133,13 +133,15 @@ void GUI( UI& _ui,
                             _drawScreenQuad.setModeVR(2);
                         if (ImGui::RadioButton("isosurface", &_ui.VRmode, 3))
                             _drawScreenQuad.setModeVR(3);
+                        if (ImGui::RadioButton("hybrid", &_ui.VRmode, 4))
+                            _drawScreenQuad.setModeVR(4);
 
-                        if (_ui.VRmode == 2)
+                        if (_ui.VRmode == 2 || _ui.VRmode == 4)
                         {
                             ImGui::SliderFloat("transparency", &_ui.transparency, 0.005f, 0.2f);
                         }
 
-                        if (_ui.VRmode == 3)
+                        if (_ui.VRmode == 3 || _ui.VRmode == 4)
                         {
                             ImGui::SliderInt("Iso value", &_ui.isoValue, 0, 255);
 
