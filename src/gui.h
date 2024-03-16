@@ -160,9 +160,13 @@ void GUI( UI& _ui,
                         {
                             _drawScreenQuad.setUseJitterFlag(_ui.isJitterOn);
                         }
-                        if (ImGui::Checkbox("TF", &_ui.useTF))
+
+                        if (_ui.VRmode == 2 || _ui.VRmode == 3 || _ui.VRmode == 4)
                         {
-                            _drawScreenQuad.setUseTFFlag(_ui.useTF);
+                            if (ImGui::Checkbox("TF", &_ui.useTF))
+                            {
+                                _drawScreenQuad.setUseTFFlag(_ui.useTF);
+                            }
                         }
                     }
                 }

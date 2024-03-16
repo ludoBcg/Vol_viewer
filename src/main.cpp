@@ -68,8 +68,9 @@ Gbuffer m_gBuf;                 /*!< screen-space textures for G-buffer  */
 
 // shader programs
 GLuint m_programBoundingGeom;   /*!< handle of the program object (i.e. shaders) for bounding geometry rendering */
-GLuint m_programRayCast;        /*!< handle of the program object (i.e. shaders) for ray-casting rendering */
-GLuint m_programIsoSurf;        /*!< handle of the program object (i.e. shaders) for ray-casting rendering */
+GLuint m_programRayCast;        /*!< handle of the program object (i.e. shaders) for ray-casting rendering (MIP / alpha blending) */
+GLuint m_programIsoSurf;        /*!< handle of the program object (i.e. shaders) for ray-casting rendering (isosurface) */
+GLuint m_programHybrid;         /*!< handle of the program object (i.e. shaders) for ray-casting rendering (hybrid) */
 GLuint m_programSlice;          /*!< handle of the program object (i.e. shaders) for slice rendering */
 GLuint m_programQuad;           /*!< handle of the program object (i.e. shaders) for screen quad rendering */
 GLuint m_programDeferred;       /*!< handle of the program object (i.e. shaders) for deferred screen space rendering of isosurface */
@@ -179,8 +180,9 @@ void initialize()
 
     // init shaders
     m_programBoundingGeom = loadShaderProgram(shaderDir + "boundingGeom.vert", shaderDir + "boundingGeom.frag");// renders 3D geometry with (XYZ) as colors, and writes results into positionTex
-    m_programRayCast = loadShaderProgram(shaderDir + "rayCast.vert", shaderDir + "rayCast.frag");               // Performs ray-casting 
-    m_programIsoSurf = loadShaderProgram(shaderDir + "isoSurf.vert", shaderDir + "isoSurf.frag");               // Performs ray-casting 
+    m_programRayCast = loadShaderProgram(shaderDir + "rayCast.vert", shaderDir + "rayCast.frag");               // Performs ray-casting (MIP / alphabe blending)
+    m_programIsoSurf = loadShaderProgram(shaderDir + "isoSurf.vert", shaderDir + "isoSurf.frag");               // Performs ray-casting (isosurface)
+    m_programHybrid = loadShaderProgram(shaderDir + "hybrid.vert", shaderDir + "hybrid.frag");                  // Performs ray-casting (hybrid)
     m_programSlice = loadShaderProgram(shaderDir + "slice.vert", shaderDir + "slice.frag");                     // Render textured slices 
     m_programQuad = loadShaderProgram(shaderDir + "screenQuad.vert", shaderDir + "screenQuad.frag");            // Renders screenQuad with texture one
     m_programDeferred = loadShaderProgram(shaderDir + "deferred.vert", shaderDir + "deferred.frag");
@@ -372,9 +374,9 @@ void renderRayCast()
         viewID = 1;
     }
 
-    if (m_ui.VRmode == 3)
+    if (m_ui.VRmode == 3 || m_ui.VRmode == 4)
     {
-        // G-buffer for isosurface rendering (WIP)
+        // G-buffer for isosurface rendering
 
         // bind dedicated FBO
         glBindFramebuffer(GL_FRAMEBUFFER, m_gBufferFBO);
@@ -395,8 +397,10 @@ void renderRayCast()
                                     viewMat, 
                                     projMat };
  
-        m_drawScreenQuad->drawIsoSurf(m_programIsoSurf, m_rayCasting, m_lookupTex, m_ui.isoValue, mvpMatrices, 
-                                      m_lightDir, glm::vec2(m_viewportDim[viewID].x, m_viewportDim[viewID].y));
+        GLuint program;
+        m_ui.VRmode == 4 ? program = m_programHybrid : program = m_programIsoSurf;
+        m_drawScreenQuad->drawIsoSurf(program, m_rayCasting, m_lookupTex, m_ui.isoValue, mvpMatrices,
+                                      m_lightDir, glm::vec2(m_viewportDim[viewID].x, m_viewportDim[viewID].y), m_ui.transparency);
     
         if (m_ui.isBackgroundWhite)
             glClearColor(1.0f, 1.0f, 1.0f, 0.0);
@@ -433,7 +437,7 @@ void renderRayCast()
         m_drawScreenQuad->drawScreenQuad(m_programQuad, m_rayCasting.frontPosTex);
     else if (m_ui.showBackTex)
         m_drawScreenQuad->drawScreenQuad(m_programQuad, m_rayCasting.backPosTex);
-    else if (m_ui.VRmode == 3)
+    else if (m_ui.VRmode == 3 || m_ui.VRmode == 4)
     {
         MVPmatrices mvpMatrices = { modelMat, viewMat, projMat };
 
@@ -640,8 +644,9 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
     {
         // reload shaders
         m_programBoundingGeom = loadShaderProgram(shaderDir + "boundingGeom.vert", shaderDir + "boundingGeom.frag");// renders 3D geometry with (XYZ) as colors, and writes results into positionTex
-        m_programRayCast = loadShaderProgram(shaderDir + "rayCast.vert", shaderDir + "rayCast.frag");               // Performs ray-casting 
-        m_programIsoSurf = loadShaderProgram(shaderDir + "isoSurf.vert", shaderDir + "isoSurf.frag");               // Performs ray-casting 
+        m_programRayCast = loadShaderProgram(shaderDir + "rayCast.vert", shaderDir + "rayCast.frag");               // Performs ray-casting (MIP / alphabe blending)
+        m_programIsoSurf = loadShaderProgram(shaderDir + "isoSurf.vert", shaderDir + "isoSurf.frag");               // Performs ray-casting (isosurface)
+        m_programHybrid = loadShaderProgram(shaderDir + "hybrid.vert", shaderDir + "hybrid.frag");                  // Performs ray-casting (hybrid)
         m_programSlice = loadShaderProgram(shaderDir + "slice.vert", shaderDir + "slice.frag");                     // Render textured slices 
         m_programQuad = loadShaderProgram(shaderDir + "screenQuad.vert", shaderDir + "screenQuad.frag");
         m_programDeferred = loadShaderProgram(shaderDir + "deferred.vert", shaderDir + "deferred.frag");
