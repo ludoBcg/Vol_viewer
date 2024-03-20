@@ -66,6 +66,15 @@ vec3 interval_bisection(vec3 ray_position, vec3 ray_direction, float _stepSize)
 }
 
 
+float specular_normalized(in vec3 _N, in vec3 _H, in float _specularPower)
+{
+	float normalization = (8.0 + _specularPower) / 8.0;
+	float specular = normalization * pow(max(0.0, dot(_N, _H)), _specularPower); // add max to remove black artifacts
+	specular = min(1.0f, specular); // make sure max specular value is 1
+	return specular;
+}
+
+
 // Find highest intensity value in 6-voxel neigborhood
 float maxNbhVal(in sampler3D image, in vec3 pos)
 {
@@ -215,10 +224,17 @@ void main()
 		// Blinn-Phong illumination
 		vec3 diffuseColor = accumAB.rgb * max(0.0, dot(N, L));
 
-		if(u_useShadow)
-			diffuseColor *= (1.0 - shadowRay(pos, L, rayDir, stepSize) );
+		vec4 vecV = normalize(mat4(u_matV* inverse(u_matM)) * vec4(pos.xyz, 1.0));
+		vec3 vecH = normalize(L + vecV.xyz);
+		vec3 specularColor = vec3(1.0, 1.0, 1.0) * specular_normalized(N, vecH, 128.0);
 
-		color.rgb = diffuseColor + u_ambientColor;
+		if (u_useShadow)
+		{
+			diffuseColor *= (1.0 - shadowRay(pos, L, rayDir, stepSize));
+			specularColor *= (1.0 - shadowRay(pos, L, rayDir, stepSize));
+		}
+
+		color.rgb = diffuseColor + u_ambientColor + specularColor;
 		color.a = 1.0;
 
 		// write model space position coords into G-buffer
