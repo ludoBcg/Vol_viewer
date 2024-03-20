@@ -5,9 +5,7 @@
 uniform sampler3D u_volumeTexture;
 uniform sampler2D u_backFaceTexture;
 uniform sampler2D u_frontFaceTexture;
-uniform sampler2D u_perlinTex;
 uniform sampler1D u_lookupTexture;
-uniform bool u_useJitter;
 uniform bool u_useGammaCorrec;
 uniform int u_useTF;
 uniform int u_modeVR; // MIP = 1, alpha blending = 2
@@ -22,8 +20,6 @@ in vec2 v_texcoord;
 
 out vec4 frag_color;
 
-
-vec2 perlinNoiseScale = vec2(u_screenDims[0] * 0.01, u_screenDims[1] * 0.01);
 
 vec4 TF(in float intensity)
 { 
@@ -55,9 +51,6 @@ void main()
     vec4 frontFace = texture(u_frontFaceTexture, v_texcoord);
     vec4 backFace = texture(u_backFaceTexture, v_texcoord);
 
-	// sample random vec
-	float randomVal = texture(u_perlinTex, v_texcoord * perlinNoiseScale).r;
-
     if (frontFace.a == 0.0 || backFace.a == 0) { discard; }
 
     vec3 rayStart = frontFace.xyz;
@@ -68,12 +61,6 @@ void main()
 	vec4 accumAB = vec4(0.0);
 
     vec3 pos = rayStart;
-
-	if (u_useJitter)
-	{
-		// add random length in ray direction to start position
-		pos += randomVal * stepSize * rayDir;
-	}
 
     float intensity = 0.0;
 

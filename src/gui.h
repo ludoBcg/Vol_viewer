@@ -156,9 +156,12 @@ void GUI( UI& _ui,
                             }
                         }
 
-                        if (ImGui::Checkbox("Jitter", &_ui.isJitterOn))
+                        if (_ui.VRmode == 3 || _ui.VRmode == 4)
                         {
-                            _drawScreenQuad.setUseJitterFlag(_ui.isJitterOn);
+                            if (ImGui::Checkbox("Jitter", &_ui.isJitterOn))
+                            {
+                                _drawScreenQuad.setUseJitterFlag(_ui.isJitterOn);
+                            }
                         }
 
                         if (_ui.VRmode == 2 || _ui.VRmode == 3 || _ui.VRmode == 4)

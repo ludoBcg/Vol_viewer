@@ -366,10 +366,6 @@ void DrawableMesh::drawRayCast(GLuint _program, RayCasting& _rayCastTex, GLuint 
     glBindTexture(GL_TEXTURE_2D, _rayCastTex.frontPosTex);
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, _rayCastTex.backPosTex);
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, m_noiseTex);
-    glActiveTexture(GL_TEXTURE4);
-    glBindTexture(GL_TEXTURE_2D, m_perlinTex);
     glActiveTexture(GL_TEXTURE5);
     glBindTexture(GL_TEXTURE_1D, _1dTex);
 
@@ -377,10 +373,7 @@ void DrawableMesh::drawRayCast(GLuint _program, RayCasting& _rayCastTex, GLuint 
     glUniform1i(glGetUniformLocation(_program, "u_volumeTexture"), 0);
     glUniform1i(glGetUniformLocation(_program, "u_frontFaceTexture"), 1);
     glUniform1i(glGetUniformLocation(_program, "u_backFaceTexture"), 2);
-    glUniform1i(glGetUniformLocation(_program, "u_noiseTex"), 3);
-    glUniform1i(glGetUniformLocation(_program, "u_perlinTex"), 4);
     glUniform1i(glGetUniformLocation(_program, "u_lookupTexture"), 5);
-    glUniform1i(glGetUniformLocation(_program, "u_useJitter"), m_useJitter);
     glUniform1i(glGetUniformLocation(_program, "u_useTF"), m_useTF);
     glUniform1i(glGetUniformLocation(_program, "u_useGammaCorrec"), m_useGammaCorrec);
     glUniform1i(glGetUniformLocation(_program, "u_modeVR"), m_modeVR);
