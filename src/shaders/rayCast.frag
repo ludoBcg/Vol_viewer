@@ -64,7 +64,7 @@ void main()
 
     float intensity = 0.0;
 
-	for (int i = 0; i < numSteps; ++i) 
+	for (int i = 0; i < numSteps && accumAB.a < 1.0; ++i)
 	{
 		intensity = texture(u_volumeTexture, pos).r;
 		//intensity = textureLod(u_volumeTexture, pos, 5.0).r;
@@ -79,7 +79,7 @@ void main()
 		tfColor.a = clamp(1.0 * intensity, 0.0, 1.0);
 		tfColor.a *= stepSize / u_transparency; // reduce the alpha when you accumulate too many layers
 		accumAB.rgb += (tfColor.rgb * tfColor.a) * (1.0 - accumAB.a); // accumulate color (ponderated by reduced alpha) with a decreasing weight
-		accumAB.a += tfColor.a * (1.0 - accumAB.a); //accumulate alpha with a decreasing weight			
+		accumAB.a += tfColor.a * (1.0 - accumAB.a); //accumulate alpha with a decreasing weight
 
 		pos += stepSize * rayDir;
 	}

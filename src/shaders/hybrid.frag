@@ -199,10 +199,11 @@ void main()
 		// normal in view space to write in B-buffer
 		vec4 Nreturn = normalize(mat4(u_matV * u_matM) * vec4(normal.xyz, 1.0));
 		
-		//////////////////////
+		// second ray casting after surface penetration
+		int numSteps2 = int(float(numSteps) * 0.2);
 		vec3 pos2 = pos; // start second ray casting from isosurface
 		vec4 accumAB = vec4(0.0);
-		for (int i = 0; i < 20; ++i) 
+		for (int i = 0; i < numSteps2 && accumAB.a < 1.0; ++i)
 		{
 			float intensity2 = texture(u_volumeTexture, pos2).r;
 			intensity2 = maxNbhVal(u_volumeTexture, pos2);
@@ -219,14 +220,13 @@ void main()
 
 			pos2 += stepSize * rayDir;
 		}
-		//////////////////////
 
 		// Blinn-Phong illumination
 		vec3 diffuseColor = accumAB.rgb * max(0.0, dot(N, L));
 
 		vec4 vecV = normalize(mat4(u_matV* inverse(u_matM)) * vec4(pos.xyz, 1.0));
 		vec3 vecH = normalize(L + vecV.xyz);
-		vec3 specularColor = vec3(1.0, 1.0, 1.0) * specular_normalized(N, vecH, 128.0);
+		vec3 specularColor = vec3(1.0, 1.0, 1.0) * specular_normalized(N, vecH, 64.0);
 
 		if (u_useShadow)
 		{
