@@ -33,8 +33,63 @@ out vec4 frag_color;
 
 
 vec2 perlinNoiseScale = vec2(u_screenDims[0] * 0.01, u_screenDims[1] * 0.01);
+const float PI = 3.14159265359;
 
-// Performs interval bisection that can be used to improve the
+// -------------------------------------------------------------------------------
+// PBR functions
+// see https://learnopengl.com/PBR/
+
+// Normal distribution function (D)
+float DistributionGGX(vec3 _N, vec3 _H, float _a)
+{
+	// Compute NDF using Trowbridge-Reitz GGX
+	// (statistically approximate the general alignment of the microfacets given some roughness parameter)
+
+	float a2 = _a * _a;
+	float NdotH = max(dot(_N, _H), 0.0);
+	float NdotH2 = NdotH * NdotH;
+
+	float nom = a2;
+	float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+	denom = PI * denom * denom;
+
+	return nom / denom;
+}
+
+// Geometry function (G)
+float GeometrySchlickGGX(float _NdotV, float _k)
+{
+	float nom = _NdotV;
+	float denom = _NdotV * (1.0 - _k) + _k;
+
+	return nom / denom;
+}
+
+float GeometrySmith(vec3 _N, vec3 _V, vec3 _L, float _k)
+{
+	// Compute geometry function using Schlick-GGX
+	// (statistically approximates the relative surface area where its micro surface-details overshadow each other causing light rays to be occluded)
+
+	float NdotV = max(dot(_N, _V), 0.0);
+	float NdotL = max(dot(_N, _L), 0.0);
+	float ggx1 = GeometrySchlickGGX(NdotV, _k);
+	float ggx2 = GeometrySchlickGGX(NdotL, _k);
+
+	return ggx1 * ggx2;
+}
+
+// Fresnel equation (F)
+vec3 fresnelSchlick(float _cosTheta, vec3 _F0)
+{
+	// Fresnel-Schlick approximation for F
+	// (describes the ratio of light that gets reflected over the light that gets refracted)
+
+	return _F0 + (1.0 - _F0) * pow(1.0 - _cosTheta, 5.0);
+}
+
+
+// -------------------------------------------------------------------------------
+// Interval bisection that can be used to improve the
 // accuracy of iso-surface detection. Based on a CG example in the
 // SIGGRAPH2009 course notes on Advanced Illumination Techniques for
 // GPU-Based Volume Raycasting.
@@ -66,6 +121,30 @@ vec3 interval_bisection(vec3 ray_position, vec3 ray_direction, float _stepSize)
 }
 
 
+// -------------------------------------------------------------------------------
+// Shadow computation 
+// Casts a secondary ray in the direction of light source
+// and detects intersections with isosurface
+int shadowRay(vec3 _pos, vec3 _lightDir, vec3 _rayDir, float _stepSize) 
+{
+	float maxStep = u_maxSteps * 0.5;
+
+	_pos -= _stepSize * _rayDir; // offset to get out of surface 
+
+	for (int i = 0; i < int(maxStep); i++)
+	{
+		_pos += _stepSize * _lightDir;
+
+		if (texture(u_volumeTexture, _pos).r > u_isoValue)
+			return 1;
+	}
+
+	return 0;
+}
+
+
+// -------------------------------------------------------------------------------
+// Phong shading specular term
 float specular_normalized(in vec3 _N, in vec3 _H, in float _specularPower)
 {
 	float normalization = (8.0 + _specularPower) / 8.0;
@@ -74,6 +153,8 @@ float specular_normalized(in vec3 _N, in vec3 _H, in float _specularPower)
 	return specular;
 }
 
+// -------------------------------------------------------------------------------
+// 3D filters
 
 // Find highest intensity value in 6-voxel neigborhood
 float maxNbhVal(in sampler3D image, in vec3 pos)
@@ -90,48 +171,30 @@ float maxNbhVal(in sampler3D image, in vec3 pos)
 	return maxVal;
 }
 
-
 // 6-voxel neigborhood Sobel filter
 vec3 imageGradient(in sampler3D image, in vec3 pos)
 {
-    vec3 grad = vec3(0.0);
-    grad.x += textureOffset(image, pos,  ivec3(1, 0, 0)).r;
-    grad.x -= textureOffset(image, pos, -ivec3(1, 0, 0)).r;
-    grad.y += textureOffset(image, pos,  ivec3(0, 1, 0)).r;
-    grad.y -= textureOffset(image, pos, -ivec3(0, 1, 0)).r;
-    grad.z += textureOffset(image, pos,  ivec3(0, 0, 1)).r;
-    grad.z -= textureOffset(image, pos, -ivec3(0, 0, 1)).r;
+	vec3 grad = vec3(0.0);
+	grad.x += textureOffset(image, pos, ivec3(1, 0, 0)).r;
+	grad.x -= textureOffset(image, pos, -ivec3(1, 0, 0)).r;
+	grad.y += textureOffset(image, pos, ivec3(0, 1, 0)).r;
+	grad.y -= textureOffset(image, pos, -ivec3(0, 1, 0)).r;
+	grad.z += textureOffset(image, pos, ivec3(0, 0, 1)).r;
+	grad.z -= textureOffset(image, pos, -ivec3(0, 0, 1)).r;
 
-    return grad;
+	return grad;
 }
 
-
+// -------------------------------------------------------------------------------
+// Gamma correction
 vec3 gammaToLinear(in vec3 color)
 {
-    return pow(color, vec3(2.2));
+	return pow(color, vec3(2.2));
 }
 
 vec3 linearToGamma(in vec3 color)
 {
-    return pow(color, vec3(1.0 / 2.2));
-}
-
-
-int shadowRay(vec3 _pos, vec3 _lightDir, vec3 _rayDir, float _stepSize) 
-{
-	float maxStep = u_maxSteps * 0.5;
-
-	_pos -= _stepSize * _rayDir; // offset to get out of surface 
-
-	for (int i = 0; i < int(maxStep); i++)
-	{
-		_pos += _stepSize * _lightDir;
-
-		if (texture(u_volumeTexture, _pos).r > u_isoValue)
-			return 1;
-	}
-
-	return 0;
+	return pow(color, vec3(1.0 / 2.2));
 }
 
 
