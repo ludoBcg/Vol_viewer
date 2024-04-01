@@ -222,10 +222,6 @@ void main()
     vec3 rayDir = normalize(rayStop - rayStart);
 	int numSteps = int(length(rayStart - rayStop) / stepSize);
 
-	vec3 L = vec3(0.0, 0.0, 1.0);            // light vector
-	L = normalize(u_lightDir);
-	L = normalize(mat3(inverse(u_matM)) * u_lightDir);
-
 	vec3 pos = rayStart;
 	if (u_useJitter)
 	{
@@ -256,9 +252,6 @@ void main()
 		// normal vec in 3D texture space
 		vec3 normal = normalize(-imageGradient(u_volumeTexture, pos));
 
-		// normal in img space used for lighting
-		vec3 N = normalize(normal);
-
 		// normal in view space to write in B-buffer
 		vec4 Nreturn = normalize(mat4(u_matV * u_matM) * vec4(normal.xyz, 1.0));
 		
@@ -285,20 +278,88 @@ void main()
 		}
 
 		// Blinn-Phong illumination
-		vec3 diffuseColor = accumAB.rgb * max(0.0, dot(N, L));
+		//vec3 diffuseColor = accumAB.rgb * max(0.0, dot(N, L));
 
-		vec4 vecV = normalize(mat4(u_matV* inverse(u_matM)) * vec4(pos.xyz, 1.0));
-		vec3 vecH = normalize(L + vecV.xyz);
-		vec3 specularColor = vec3(1.0, 1.0, 1.0) * specular_normalized(N, vecH, 64.0);
+		//vec4 vecV = normalize(mat4(u_matV* inverse(u_matM)) * vec4(pos.xyz, 1.0));
+		//vec3 vecH = normalize(L + vecV.xyz);
+		//vec3 specularColor = vec3(1.0, 1.0, 1.0) * specular_normalized(N, vecH, 64.0);
 
-		if (u_useShadow)
+		//if (u_useShadow)
+		//{
+		//	diffuseColor *= (1.0 - shadowRay(pos, L, rayDir, stepSize));
+		//	specularColor *= (1.0 - shadowRay(pos, L, rayDir, stepSize));
+		//}
+
+		//color.rgb = diffuseColor + u_ambientColor + specularColor;
+		//color.a = 1.0;
+
+		//PBR
 		{
-			diffuseColor *= (1.0 - shadowRay(pos, L, rayDir, stepSize));
-			specularColor *= (1.0 - shadowRay(pos, L, rayDir, stepSize));
-		}
+			vec3 albedoD = accumAB.rgb;
+			vec3 albedoS = vec3(0.9, 0.9, 0.9);
+			vec3 lightColor = vec3(1.0, 1.0, 1.0);
+			float metalness = 0.0;
+			float roughness = 0.5;
+			float glossiness = 1.0f - roughness;
 
-		color.rgb = diffuseColor + u_ambientColor + specularColor;
-		color.a = 1.0;
+			// Compute Cook Torrance BRDF (f_r) ---------------------------
+
+			// base reflectivity of the surface
+			vec3 F0 = vec3(0.04);
+			F0 = mix(F0, albedoS.rgb, metalness);
+
+			// light vector
+			vec3 vecL = normalize(u_lightDir);
+			// Normal vector (view space)
+			vec3 vecN = normalize((mat4(u_matV * u_matM) * vec4(normal.xyz, 1.0)).xyz);
+			// View vector (view space)
+			vec3 vecV = normalize((mat4(u_matV * u_matM) * vec4(pos.xyz, 1.0)).xyz);
+			// Halfway vector
+			vec3 vecH = normalize(vecL + vecV);
+
+			// Cook Torrance BRDF
+			vec3 f_r = vec3(0.0);
+			vec3 f_diff = vec3(0.0);
+			vec3 f_spec = vec3(0.0);
+
+			// specular term
+			float D = DistributionGGX(vecN, vecH, roughness);
+			float G = GeometrySmith(vecN, vecV, vecL, roughness);
+			vec3 F = fresnelSchlick(max(dot(vecH, vecV), 0.0), F0);
+
+			vec3 numerator = D * F * G;
+			float denominator = 4.0 * max(dot(vecN, vecV), 0.0) * max(dot(vecN, vecL), 0.0);
+
+			vec3 f_CookTorrance = numerator / max(denominator, 0.001);
+
+			// Lambertian diffuse term
+			vec3 f_Lambert = albedoD / PI;
+
+			vec3 k_s = F;
+			vec3 k_d = vec3(1.0) - k_s/*f_CookTorrance*/;
+			k_d *= 1.0 - metalness;
+
+			f_diff = k_d * f_Lambert;
+			f_spec = f_CookTorrance;
+
+			// Compute reflectance equation
+			vec3 Lo = vec3(0.0);
+
+			// constant attenuation if directionnal light source
+			float attenuation = 5.0f;
+
+			vec3 radiance = lightColor * attenuation;
+			// add to outgoing radiance Lo
+			float NdotL = max(dot(vecN, vecL), 0.0);
+
+			f_diff = f_diff * radiance * NdotL;
+			f_spec = f_spec * radiance * NdotL;
+
+			Lo = f_diff + f_spec;
+
+			color.rgb = Lo;
+			color.a = 1.0;
+		}
 
 		// write model space position coords into G-buffer
 		vec4 Preturn = u_matM * vec4(pos.rgb, 1.0);
