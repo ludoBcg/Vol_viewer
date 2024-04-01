@@ -147,11 +147,8 @@ void main()
     vec3 rayDir = normalize(rayStop - rayStart);
 	int numSteps = int(length(rayStart - rayStop) / stepSize);
 
-	//vec4 Nreturn = vec4(0.0, 0.0, 0.0, 1.0); // normal to write in output texture
-	//vec4 Preturn = vec4(0.0, 0.0, 0.0, 1.0); // position to write in output texture
-	vec3 L = vec3(0.0, 0.0, 1.0);            // light vector
-	L = normalize(u_lightDir);
-	L = normalize(mat3(inverse(u_matM)) * u_lightDir);
+	// light vector (transferred to 3D texture space so it can be used as shadow ray)
+	vec3 vecL = normalize(mat3(inverse(u_matM)) * u_lightDir);
 
 	vec3 pos = rayStart;
 	if (u_useJitter)
@@ -183,24 +180,23 @@ void main()
 		// normal vec in 3D texture space
 		vec3 normal = normalize(-imageGradient(u_volumeTexture, pos));
 
-		// normal in img space used for lighting
-		//vec3 N = normalize(mat3(matMVP) * normal);
-		vec3 N = normalize(normal);
+		// normal in 3D img space used for lighting
+		vec3 vecN = normalize(normal);
 
 		// normal in view space to write in B-buffer
 		vec4 Nreturn = normalize(mat4(u_matV * u_matM) * vec4(normal.xyz, 1.0));
 		
 		// read intensity from image (add on step along gradient direction)
-		intensity = maxNbhVal(u_volumeTexture, pos + stepSize * (-1 * N));
+		intensity = maxNbhVal(u_volumeTexture, pos + stepSize * (-1 * vecN));
 
 		// grey material
 		vec3 material = vec3(0.9, 0.9, 0.9);
 
 		// Blinn-Phong illumination
-		vec3 diffuseColor = material * max(0.0, dot(N, L));
+		vec3 diffuseColor = material * max(0.0, dot(vecN, vecL));
 
 		if(u_useShadow)
-			diffuseColor *= (1.0 - shadowRay(pos, L, rayDir, stepSize) );
+			diffuseColor *= (1.0 - shadowRay(pos, vecL, rayDir, stepSize) );
 
 		color.rgb = diffuseColor + u_ambientColor;
 		color.a = 1.0;
