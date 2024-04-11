@@ -171,7 +171,7 @@ class DrawableMesh
         * \param _screenDims : current dimensions of screen 
         */
         void drawIsoSurf(GLuint _program, RayCasting& _rayCastTex, GLuint _1dTex,
-                         GLuint _isoValue, MVPmatrices& _mvpMatrices, glm::vec3 _lightDir, 
+                         GLuint _isoValue, GLuint _isoValue2, MVPmatrices& _mvpMatrices, glm::vec3 _lightDir,
                          glm::vec2 _screenDims, float _transparency);
 
         /*!

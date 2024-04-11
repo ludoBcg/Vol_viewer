@@ -63,22 +63,6 @@ vec3 interval_bisection(vec3 ray_position, vec3 ray_direction, float _stepSize)
 }
 
 
-// Find highest intensity value in 6-voxel neigborhood
-//float maxNbhVal(in sampler3D image, in vec3 pos)
-//{
-//	float maxVal = texture(image, pos).r;
-//
-//	maxVal = max(maxVal, textureOffset(image, pos, ivec3(1, 0, 0)).r);
-//	maxVal = max(maxVal, textureOffset(image, pos, -ivec3(1, 0, 0)).r);
-//	maxVal = max(maxVal, textureOffset(image, pos, ivec3(0, 1, 0)).r);
-//	maxVal = max(maxVal, textureOffset(image, pos, -ivec3(0, 1, 0)).r);
-//	maxVal = max(maxVal, textureOffset(image, pos, ivec3(0, 0, 1)).r);
-//	maxVal = max(maxVal, textureOffset(image, pos, -ivec3(0, 0, 1)).r);
-//
-//	return maxVal;
-//}
-
-
 // 6-voxel neigborhood Sobel filter
 vec3 imageGradient(in sampler3D image, in vec3 pos)
 {
@@ -180,15 +164,9 @@ void main()
 		// normal vec in 3D texture space
 		vec3 normal = normalize(-imageGradient(u_volumeTexture, pos));
 
-		// normal in 3D img space used for lighting
-		//vec3 vecN = normalize(normal);
-
 		// normal in view space to write in B-buffer
 		vec4 Nreturn = normalize(mat4(u_matV * u_matM) * vec4(normal.xyz, 1.0));
 		
-		// read intensity from image (add on step along gradient direction)
-		//intensity = maxNbhVal(u_volumeTexture, pos + stepSize * (-1 * normal));
-
 		// grey material
 		vec3 material = vec3(0.9, 0.9, 0.9);
 

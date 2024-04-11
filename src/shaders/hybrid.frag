@@ -18,6 +18,7 @@ uniform bool u_useJitter;
 uniform int u_useTF;
 uniform int u_maxSteps;
 uniform float u_isoValue;
+uniform float u_isoValue2;
 uniform vec3 u_lightDir;
 uniform mat4 u_matM;
 uniform mat4 u_matV;
@@ -93,7 +94,7 @@ vec3 fresnelSchlick(float _cosTheta, vec3 _F0)
 // accuracy of iso-surface detection. Based on a CG example in the
 // SIGGRAPH2009 course notes on Advanced Illumination Techniques for
 // GPU-Based Volume Raycasting.
-vec3 interval_bisection(vec3 ray_position, vec3 ray_direction, float _stepSize)
+vec3 interval_bisection(vec3 ray_position, vec3 ray_direction, float _stepSize, float _isoValue)
 {
 	// start = voxel pos - stepSize*raydir
 	vec3 start = ray_position - _stepSize * ray_direction;
@@ -105,7 +106,7 @@ vec3 interval_bisection(vec3 ray_position, vec3 ray_direction, float _stepSize)
 		// test pos = middle between start and end
 		vec3 test_position = (start + end) / 2.0;
 
-		if (texture(u_volumeTexture, test_position).r < u_isoValue)
+		if (texture(u_volumeTexture, test_position).r < _isoValue)
 		{
 			// if test pos is outside isosurface, use it as new start position
 			start = test_position;
@@ -247,7 +248,7 @@ void main()
 	if (intensity >= u_isoValue)
 	{
 		//improve accuracy of iso surface position
-		pos = interval_bisection(pos, rayDir, stepSize);
+		pos = interval_bisection(pos, rayDir, stepSize, u_isoValue);
 
 		// normal vec in 3D texture space
 		vec3 normal = normalize(-imageGradient(u_volumeTexture, pos));
@@ -256,42 +257,36 @@ void main()
 		vec4 Nreturn = normalize(mat4(u_matV * u_matM) * vec4(normal.xyz, 1.0));
 		
 		// second ray casting after surface penetration
-		int numSteps2 = int(float(numSteps) * 0.2);
+		int numSteps2 = int(float(numSteps) * 0.5);
 		vec3 pos2 = pos; // start second ray casting from isosurface
 		vec4 accumAB = vec4(0.0);
-		for (int i = 0; i < numSteps2 && accumAB.a < 1.0; ++i)
+		float intensity2 = 0.0;
+		for (int i = 0; i < numSteps2 && accumAB.a < 1.0 && intensity2 < u_isoValue2; ++i)
 		{
-			float intensity2 = texture(u_volumeTexture, pos2).r;
-			intensity2 = maxNbhVal(u_volumeTexture, pos2);
+			intensity2 = texture(u_volumeTexture, pos2).r;
+
+			float transparency = u_transparency;
+			if (intensity2 >= u_isoValue2)
+			{
+				// render second isosurface 
+				transparency = 0.002;
+				intensity2 = maxNbhVal(u_volumeTexture, pos2 + stepSize * (-1 * normal));
+			}
 
 			// read color from TF
 			vec3 material2 = texture(u_lookupTexture, intensity2).rgb * u_useTF
 				+ vec3(intensity2, intensity2, intensity2) * (1 - u_useTF);
 
 			vec4 tfColor = vec4(material2.rgb, intensity2);
-			tfColor.a = clamp(1.0 * intensity2, 0.0, 1.0);
-			tfColor.a *= stepSize / u_transparency; // reduce the alpha when you accumulate too many layers
+			tfColor.a = clamp(intensity2, 0.0, 1.0);
+			tfColor.a *= stepSize / transparency; // reduce the alpha when you accumulate too many layers
+
 			accumAB.rgb += (tfColor.rgb * tfColor.a) * (1.0 - accumAB.a); // accumulate color (ponderated by reduced alpha) with a decreasing weight
 			accumAB.a += tfColor.a * (1.0 - accumAB.a); //accumulate alpha with a decreasing weight			
 
 			pos2 += stepSize * rayDir;
+			
 		}
-
-		// Blinn-Phong illumination
-		//vec3 diffuseColor = accumAB.rgb * max(0.0, dot(N, L));
-
-		//vec4 vecV = normalize(mat4(u_matV* inverse(u_matM)) * vec4(pos.xyz, 1.0));
-		//vec3 vecH = normalize(L + vecV.xyz);
-		//vec3 specularColor = vec3(1.0, 1.0, 1.0) * specular_normalized(N, vecH, 64.0);
-
-		//if (u_useShadow)
-		//{
-		//	diffuseColor *= (1.0 - shadowRay(pos, L, rayDir, stepSize));
-		//	specularColor *= (1.0 - shadowRay(pos, L, rayDir, stepSize));
-		//}
-
-		//color.rgb = diffuseColor + u_ambientColor + specularColor;
-		//color.a = 1.0;
 
 		//PBR
 		{
@@ -347,6 +342,13 @@ void main()
 
 			// constant attenuation if directionnal light source
 			float attenuation = 5.0f;
+
+			if (u_useShadow)
+			{
+				vec3 vecShad = normalize(mat3(inverse(u_matM)) * u_lightDir);
+				// attenuation = 2.0 if in shadow area, 5.0 if not
+				attenuation = 3.0f * (1.0 - shadowRay(pos, vecShad, rayDir, stepSize)) + 2.0f;
+			}
 
 			vec3 radiance = lightColor * attenuation;
 			// add to outgoing radiance Lo

@@ -399,7 +399,7 @@ void renderRayCast()
  
         GLuint program;
         m_ui.VRmode == 4 ? program = m_programHybrid : program = m_programIsoSurf;
-        m_drawScreenQuad->drawIsoSurf(program, m_rayCasting, m_lookupTex, m_ui.isoValue, mvpMatrices,
+        m_drawScreenQuad->drawIsoSurf(program, m_rayCasting, m_lookupTex, m_ui.isoValue, m_ui.isoValue2, mvpMatrices,
                                       m_lightDir, glm::vec2(m_viewportDim[viewID].x, m_viewportDim[viewID].y), m_ui.transparency);
     
         if (m_ui.isBackgroundWhite)

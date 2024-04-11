@@ -396,7 +396,7 @@ void DrawableMesh::drawRayCast(GLuint _program, RayCasting& _rayCastTex, GLuint 
 
 
 void DrawableMesh::drawIsoSurf(GLuint _program, RayCasting& _rayCastTex, GLuint _1dTex,
-                               GLuint _isoValue, MVPmatrices& _mvpMatrices, glm::vec3 _lightDir, 
+                               GLuint _isoValue, GLuint _isoValue2, MVPmatrices& _mvpMatrices, glm::vec3 _lightDir,
                                glm::vec2 _screenDims, float _transparency)
 {
     glUseProgram(_program);
@@ -422,6 +422,7 @@ void DrawableMesh::drawIsoSurf(GLuint _program, RayCasting& _rayCastTex, GLuint 
     glUniform1i(glGetUniformLocation(_program, "u_useGammaCorrec"), m_useGammaCorrec);
     glUniform1i(glGetUniformLocation(_program, "u_maxSteps"), m_maxSteps);
     glUniform1f(glGetUniformLocation(_program, "u_isoValue"), (float)_isoValue / 255.0f);
+    glUniform1f(glGetUniformLocation(_program, "u_isoValue2"), (float)_isoValue2 / 255.0f);
     glUniformMatrix4fv(glGetUniformLocation(_program, "u_matM"), 1, GL_FALSE, &_mvpMatrices.modelMat[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(_program, "u_matV"), 1, GL_FALSE, &_mvpMatrices.viewMat[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(_program, "u_matP"), 1, GL_FALSE, &_mvpMatrices.projMat[0][0]);
