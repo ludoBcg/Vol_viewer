@@ -586,14 +586,18 @@ namespace
         {
             if (i > 200)     // implants
                 values.push_back(glm::vec4(0.8, 0.8, 0.8, 1.0));
-            else if (i > 95) // bone
+            else if (i > 82) // bone
                 values.push_back(glm::vec4(0.97, 0.93, 0.78, 1.0));
-            else if (i > 65) // soft tissue
+            else if (i > 70) // cartilage & others
+                values.push_back(glm::vec4(0.7, 0.68, 0.5, 1.0));
+            else if (i > 61) // soft tissue
                 values.push_back(glm::vec4(0.8, 0.09, 0.0, 1.0));
-            else if (i > 15) // skin
+            else if (i > 13) // skin
                 values.push_back(glm::vec4(0.97, 0.82, 0.7, 1.0));
+            else if (i > 3) // fabric
+                values.push_back(glm::vec4(0.8, 0.8, 0.8, 1.0));
             else             // other
-                values.push_back(glm::vec4(0.9, 0.9, 0.9, 1.0));
+                values.push_back(glm::vec4(0.9, 0.9, 0.9, 0.0));
         }
 
         // generate 1D texture

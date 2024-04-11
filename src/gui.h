@@ -44,7 +44,8 @@ struct UI {
     int sliceIdC;                     /*! ID of the Coronal slice to visualize*/
     int sliceIdS;                     /*! ID of the Sagittal slice to visualize*/
     char fileName[256] = {};          /*! name of file to load */
-    int isoValue = 127;               /*! threshold isosurface rendering */
+    int isoValue = 38;                /*! threshold isosurface rendering */
+    int isoValue2 = 255;              /*! threshold second isosurface rendering (hybrid mode only) */
     float transparency = 0.02f;       /*! opacity factor for alpha blending */
 };
 
@@ -145,6 +146,9 @@ void GUI( UI& _ui,
                         {
                             ImGui::SliderInt("Iso value", &_ui.isoValue, 0, 255);
 
+                            if (_ui.VRmode == 4)
+                                ImGui::SliderInt("Iso value 2", &_ui.isoValue2, 0, 255);
+
                             if (ImGui::Checkbox("Shadows", &_ui.isShadowOn))
                             {
                                 _drawScreenQuad.setUseShadowFlag(_ui.isShadowOn);
@@ -164,7 +168,7 @@ void GUI( UI& _ui,
                             }
                         }
 
-                        if (_ui.VRmode == 2 || _ui.VRmode == 3 || _ui.VRmode == 4)
+                        if (_ui.VRmode == 2 || _ui.VRmode == 4)
                         {
                             if (ImGui::Checkbox("TF", &_ui.useTF))
                             {
