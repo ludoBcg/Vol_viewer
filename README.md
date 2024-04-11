@@ -2,7 +2,7 @@
 
 A Volume viewer for visualization of medical images
 
-![img](https://github.com/ludoBcg/Vol_viewer/blob/img.png?raw=true)
+![img](img.png)
 
 ## 1. DATA
 
