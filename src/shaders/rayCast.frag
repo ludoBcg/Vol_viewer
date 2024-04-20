@@ -11,7 +11,6 @@ uniform int u_useTF;
 uniform int u_modeVR; // MIP = 1, alpha blending = 2
 uniform int u_maxSteps;
 uniform mat4 u_matMVP;
-uniform vec2 u_screenDims;
 uniform float u_transparency;
 
 

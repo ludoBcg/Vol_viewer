@@ -145,16 +145,6 @@ int shadowRay(vec3 _pos, vec3 _lightDir, vec3 _rayDir, float _stepSize)
 
 
 // -------------------------------------------------------------------------------
-// Phong shading specular term
-float specular_normalized(in vec3 _N, in vec3 _H, in float _specularPower)
-{
-	float normalization = (8.0 + _specularPower) / 8.0;
-	float specular = normalization * pow(max(0.0, dot(_N, _H)), _specularPower); // add max to remove black artifacts
-	specular = min(1.0f, specular); // make sure max specular value is 1
-	return specular;
-}
-
-// -------------------------------------------------------------------------------
 // 3D filters
 
 // Find highest intensity value in 6-voxel neigborhood

@@ -155,9 +155,10 @@ class DrawableMesh
         * \param _rayCastTex: reference to ray-casting set of textures (i.e., 3D texture with volume data + 2d textures for front and back face color rendering of bounding geometry)
         * \param _1dTex : 1D texture for transfer function (i.e., lookup table)
         * \param _mvpMat : MVP matrix
+        * \param _transparency : transparency factor for alpha blending
         */
         void drawRayCast(GLuint _program, RayCasting& _rayCastTex, GLuint _1dTex,
-                         glm::mat4 _mvpMat, glm::vec2 _screenDims, float _transparency);
+                         glm::mat4 _mvpMat, float _transparency);
 
         /*!
         * \fn drawIsoSurf
@@ -166,9 +167,11 @@ class DrawableMesh
         * \param _rayCastTex: reference to ray-casting set of textures (i.e., 3D texture with volume data + 2d textures for front and back face color rendering of bounding geometry)
         * \param _1dTex : 1D texture for transfer function (i.e., lookup table)
         * \param _isoValue: threshold value defining isosurface
+        * \param _isoValue: threshold value defining second isosurface (for hybrid mode only)
         * \param _mvpMatrices : Model, View, and Projection matrices
         * \param _lightDir : light direction
         * \param _screenDims : current dimensions of screen 
+        * \param _transparency : transparency factor for alpha blending (for hybrid mode only)
         */
         void drawIsoSurf(GLuint _program, RayCasting& _rayCastTex, GLuint _1dTex,
                          GLuint _isoValue, GLuint _isoValue2, MVPmatrices& _mvpMatrices, glm::vec3 _lightDir,

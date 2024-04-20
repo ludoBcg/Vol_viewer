@@ -444,8 +444,8 @@ void renderRayCast()
         m_drawScreenQuad->drawDeferred(m_programDeferred, m_gBuf, mvpMatrices, glm::vec2(m_viewportDim[viewID].x, m_viewportDim[viewID].y));
     }
     else
-        m_drawScreenQuad->drawRayCast(m_programRayCast, m_rayCasting, m_lookupTex, projMat * viewMat * modelMat, 
-                                      glm::vec2(m_viewportDim[viewID].x, m_viewportDim[viewID].y), m_ui.transparency);
+        m_drawScreenQuad->drawRayCast(m_programRayCast, m_rayCasting, m_lookupTex, 
+                                      projMat * viewMat * modelMat, m_ui.transparency);
 
     glDisable(GL_BLEND);
 

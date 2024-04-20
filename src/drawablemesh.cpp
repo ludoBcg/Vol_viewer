@@ -355,7 +355,7 @@ void DrawableMesh::drawDeferred(GLuint _program, Gbuffer _gBufferTex, MVPmatrice
 
 
 void DrawableMesh::drawRayCast(GLuint _program, RayCasting& _rayCastTex, GLuint _1dTex,
-                               glm::mat4 _mvpMat, glm::vec2 _screenDims, float _transparency)
+                               glm::mat4 _mvpMat, float _transparency)
 {
     glUseProgram(_program);
 
@@ -379,7 +379,6 @@ void DrawableMesh::drawRayCast(GLuint _program, RayCasting& _rayCastTex, GLuint 
     glUniform1i(glGetUniformLocation(_program, "u_modeVR"), m_modeVR);
     glUniform1i(glGetUniformLocation(_program, "u_maxSteps"), m_maxSteps);
     glUniformMatrix4fv(glGetUniformLocation(_program, "u_matMVP"), 1, GL_FALSE, &_mvpMat[0][0]);
-    glUniform2fv(glGetUniformLocation(_program, "u_screenDims"), 1, &_screenDims[0]);
     glUniform1f(glGetUniformLocation(_program, "u_transparency"), _transparency);
 
 
