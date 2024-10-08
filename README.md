@@ -1,12 +1,12 @@
 # Vol_viewer
 
-A Volume viewer for visualization of medical images
+A volume viewer for visualization of medical images
 
 ![img](img.png)
 
 ## 1. DATA
 
-Vol_viewer can load 3D images using the .vtk file format.
+Vol_viewer can load 3D images using the .vtk file format. You can use [ITK-SNAP](http://www.itksnap.org/pmwiki/pmwiki.php) to export your data to the right format.
 
 Images should be stored in the folder "Vol_viewer/data".
 
@@ -15,8 +15,9 @@ Images should be stored in the folder "Vol_viewer/data".
 
 All external dependencies are open-source libraries.
 
-For convenience, they should be copied in a "Vol_viewer/external" folder (see [RT_lite](https://github.com/ludoBcg/RT_lite) ).
+GLtools.h and other libraries are provided in the [libs](https://github.com/ludoBcg/libs) repository. 
 
+External dependencies used for this project are:
 
 * [GLEW (The OpenGL Extension Wrangler Library)](http://glew.sourceforge.net/)
   
@@ -30,7 +31,8 @@ For convenience, they should be copied in a "Vol_viewer/external" folder (see [R
 ## 3. COMPILATION
 
 
-Vol_viewer is provided as a ready-to-build folder with a CMakeList. 
+Vol_viewer is provided as a ready-to-build folder with a CMakeList. Make sure that it points to the correct *libs* directory, then use it to generate a project.
+This project was developed with VisualStudio 2022.
 
 
 ## 4. SOURCES
