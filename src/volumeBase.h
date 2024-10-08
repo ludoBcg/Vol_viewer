@@ -25,6 +25,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "GLtools.h"
+
 
 /*!
 * \class VolumeBase
@@ -52,7 +54,7 @@ class VolumeBase
         VoxelType getValue1ui(unsigned int _id) 
         {
             if( _id < 0 || _id >= m_data.size() )
-                std::cerr << "[VolumeBase::getValue1ui] ERROR: out of bound: " << _id << std::endl;
+                errorLog() << "VolumeBase::getValue1ui(): out of bound: " << _id;
 
             return m_data[_id]; 
         }
@@ -64,8 +66,8 @@ class VolumeBase
                 index = (m_dimensions.x * m_dimensions.y * _k) + (m_dimensions.x * _j) + _i;
             else
             {
-                std::cerr << "[VolumeBase::getValue3ui] ERROR: out of bound: " << _i << " " << _j << " " << _k << std::endl;
-                std::cerr << "[VolumeBase::getValue3ui] ERROR: out of bound: " << m_dimensions.x << " " << m_dimensions.y << " " << m_dimensions.z << std::endl;
+                errorLog() << "VolumeBase::getValue3ui(): out of bound: " << _i << " " << _j << " " << _k;
+                errorLog() << "VolumeBase::getValue3ui(): out of bound: " << m_dimensions.x << " " << m_dimensions.y << " " << m_dimensions.z;
             }
 
             return m_data[index];
@@ -87,7 +89,7 @@ class VolumeBase
         unsigned int getIdfromCoords(unsigned int _i, unsigned int _j, unsigned int _k) 
         { 
             if (_i < 0 || _i >= m_dimensions.x || _j < 0 || _j >= m_dimensions.y || _k < 0 || _k >= m_dimensions.z)
-                std::cerr << "[VolumeBase::getIdfromCoords] ERROR: out of bound: " << _i << " " << _j << " " << _k << std::endl;
+                errorLog() << "VolumeBase::getIdfromCoords(): out of bound: " << _i << " " << _j << " " << _k;
 
             return (m_dimensions.x * m_dimensions.y * _k) + (m_dimensions.x * _j) + _i; 
         }
@@ -118,7 +120,7 @@ class VolumeBase
             }
             else
             {
-                std::cerr << "[VolumeBase::getValue3f] ERROR: out of bound: " << _x << " " << _y << " " << _z << std::endl;
+                errorLog() << "VolumeBase::getValue3f(): out of bound: " << _x << " " << _y << " " << _z;
             }
 
             return (*this).getValue3ui(i, j, k);
@@ -196,7 +198,7 @@ class VolumeBase
         void assign(unsigned int _nbElem, VoxelType _val) 
         {
             if( _nbElem > m_dimensions.x*m_dimensions.y*m_dimensions.z)
-                std::cerr << "[VolumeBase::assign] ERROR: assign more than grid dimensions: " << _nbElem << std::endl;
+                errorLog() << "VolumeBase::assign(): assign more than grid dimensions: " << _nbElem;
 
             m_data.assign(_nbElem, _val); 
         }
@@ -204,7 +206,7 @@ class VolumeBase
         void copyData(VolumeBase<VoxelType>* _newVol) 
         {
             if( m_data.size() != _newVol->m_data.size() )
-                std::cerr << "[VolumeBase::copyData] ERROR: new array size larger than grid dimensions: " << _newVol->m_data.size() << std::endl;
+                errorLog() << "VolumeBase::copyData(): new array size larger than grid dimensions: " << _newVol->m_data.size();
 
             m_data = _newVol->m_data; 
         }
@@ -230,7 +232,7 @@ class VolumeBase
             }
             else
             {
-                std::cerr << "[VolumeBase::coord3fto3i] ERROR: out of bound: " << _3fCoords.x << " " << _3fCoords.y << " " << _3fCoords.z << std::endl;
+                errorLog() << "VolumeBase::coord3fto3i(): out of bound: " << _3fCoords.x << " " << _3fCoords.y << " " << _3fCoords.z;
             }
 
             return glm::ivec3(i, j, k);
@@ -342,7 +344,7 @@ class VolumeBase
         void resize(unsigned int _size)
         {
             if( _size > m_dimensions.x*m_dimensions.y*m_dimensions.z)
-                std::cerr << "[VolumeBase::resize] ERROR: new array size larger than grid dimensions: " << _size << std::endl;
+                errorLog() << "VolumeBase::resize(): new array size larger than grid dimensions: " << _size;
 
             m_data.resize(_size);
         }

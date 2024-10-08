@@ -111,6 +111,8 @@ void DrawableMesh::createScreenQuadVAO()
     vertices.clear();
     normals.clear();
     indices.clear();
+
+    errorLog().lastGLerror();
 }
 
 
@@ -174,6 +176,8 @@ void DrawableMesh::createUnitCubeVAO()
     vertices.clear();
     normals.clear();
     indices.clear();
+
+    errorLog().lastGLerror();
 }
 
 
@@ -203,7 +207,7 @@ void DrawableMesh::createSliceVAO(unsigned int _orientation)
         texcoords = { glm::vec3(0.0f, 0.0f, 0.0f),   glm::vec3(0.0f, 0.0f, 1.0f),   glm::vec3(0.0f, 1.0f, 1.0f),   glm::vec3(0.0f, 1.0f, 0.0f) };
     }
     else
-        std::cerr << "DrawableMesh::createSliceVAO(): Invalide Slice orientation" << std::endl;
+        errorLog() << "DrawableMesh::createSliceVAO(): Invalide Slice orientation";
 
     std::vector<uint32_t> indices = { 0, 1, 2, 0, 2, 3 };
     
@@ -251,6 +255,8 @@ void DrawableMesh::createSliceVAO(unsigned int _orientation)
     vertices.clear();
     texcoords.clear();
     indices.clear();
+
+    errorLog().lastGLerror();
 }
 
 

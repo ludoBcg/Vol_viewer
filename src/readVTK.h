@@ -124,7 +124,7 @@ namespace ReadVTK
     {
         std::ifstream VTKFile(filename, std::ios::binary);
         if (!VTKFile.is_open()) {
-            std::cerr << "Could not open " << filename << std::endl;
+            errorLog() << "Could not open " << filename;
             return false;
         }
 

@@ -27,18 +27,18 @@ int m_winWidth = 800;           /*!<  window width */
 int m_winHeight = 600;          /*!<  window height */
 const unsigned int TEX_WIDTH = 2048, TEX_HEIGHT = 2048; /*!< textures dimensions  */
 
-Trackball m_trackball;          /*!<  model trackball */
-Trackball m_lightTrackball;     /*!<  light trackball */
+GLtools::Trackball m_trackball;          /*!<  model trackball */
+GLtools::Trackball m_lightTrackball;     /*!<  light trackball */
 
 // Scene
 glm::vec3 m_centerCoords;       /*!<  coords of the center of the scene */
 float m_radScene;               /*!< radius of the scene (i.e., diagonal of the BBox) */
 
 // Light and cameras 
-Camera m_camera3D;              /*!<  camera 3D view*/
-Camera m_cameraA;               /*!<  camera Axial view (ortho) */
-Camera m_cameraC;               /*!<  camera Coronal view (ortho) */
-Camera m_cameraS;               /*!<  camera Sagittal view (ortho) */
+GLtools::Camera m_camera3D;              /*!<  camera 3D view*/
+GLtools::Camera m_cameraA;      /*!<  camera Axial view (ortho) */
+GLtools::Camera m_cameraC;      /*!<  camera Coronal view (ortho) */
+GLtools::Camera m_cameraS;      /*!<  camera Sagittal view (ortho) */
 float m_zoomFactor;             /*!<  zoom factor */
 glm::vec3 m_camPos;             /*!<  camera position */
 glm::vec3 m_lightDir;           /*!<  light direction (directional light source) */
@@ -173,9 +173,9 @@ void initialize()
     // setup screen quad rendering
     m_drawScreenQuad = new DrawableMesh;
     m_drawScreenQuad->createScreenQuadVAO();
-    m_drawScreenQuad->setMaxSteps(glm::length(glm::vec3((float)m_volume->getDimensions().x,
-                                                        (float)m_volume->getDimensions().y,
-                                                        (float)m_volume->getDimensions().z)));
+    m_drawScreenQuad->setMaxSteps(static_cast<int>(glm::length(glm::vec3((float)m_volume->getDimensions().x,
+                                                                         (float)m_volume->getDimensions().y,
+                                                                         (float)m_volume->getDimensions().z))));
 
 
     // init shaders

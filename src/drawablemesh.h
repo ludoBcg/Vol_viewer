@@ -12,7 +12,7 @@
 #ifndef DRAWABLEMESH_H
 #define DRAWABLEMESH_H
 
-#include "tools.h"
+#include "utils.h"
 
 
 // The attribute locations used in the vertex shader

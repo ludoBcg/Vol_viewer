@@ -37,7 +37,7 @@ void VolumeImg::volumeLoad(const std::string& filename)
     else if (filename.find(".raw") != std::string::npos)
         volumeLoadRAW(filename);
     else
-        std::cout << "[ERROR] VolumeImg::volumeLoad(): file " << filename << " format no supported" << std::endl;
+        errorLog() << "VolumeImg::volumeLoad(): file " << filename << " format no supported";
 }
 
 
@@ -118,8 +118,7 @@ bool VolumeImg::volumeLoadVTK(const std::string& filename)
     std::cout << "    origin (x,y,z) :" << header.origin.x << " " << header.origin.y << " " << header.origin.z << std::endl;
     std::cout << "    datatype :" << header.datatype << std::endl << std::endl;
     std::cout << "    volume box size: " << header.dimensions.x * header.spacing.x << " " <<
-        header.dimensions.y * header.spacing.y << " " <<
-        header.dimensions.z * header.spacing.z << std::endl;
+              header.dimensions.y * header.spacing.y << " " << header.dimensions.z * header.spacing.z << std::endl;
 
     // Read data
     if (header.datatype == "uint8") {
@@ -132,7 +131,7 @@ bool VolumeImg::volumeLoadVTK(const std::string& filename)
         std::memcpy(&m_data[0], &imageData[0], nBytes);
     }
     else if (header.datatype == "uint16") {
-        std::cerr << "[ERROR] VolumeImage::volumeLoadVTK(): uint16 datatype not supported" << std::endl;
+        errorLog() << "VolumeImage::volumeLoadVTK(): uint16 datatype not supported";
         std::vector<uint16_t> imageData;
         if (!ReadVTK::readData(filename, header, &imageData)) {
             return false;
@@ -142,7 +141,7 @@ bool VolumeImg::volumeLoadVTK(const std::string& filename)
         std::memcpy(&m_data[0], &imageData[0], nBytes);
     }
     else if (header.datatype == "int16") {
-        std::cerr << "[WARNING] VolumeImage::volumeLoadVTK(): int16 datatype cast to uint8" << std::endl;
+        warningLog() << "VolumeImage::volumeLoadVTK(): int16 datatype cast to uint8";
         std::vector<int16_t> imageData;
         if (!ReadVTK::readData(filename, header, &imageData)) {
             return false;
@@ -159,7 +158,7 @@ bool VolumeImg::volumeLoadVTK(const std::string& filename)
         //std::memcpy(&volume->data[0], &imageData[0], nBytes);
     }
     else if (header.datatype == "uint32") {
-        std::cerr << "[ERROR] VolumeImage::volumeLoadVTK(): uint32 datatype not supported" << std::endl;
+        errorLog() << "VolumeImage::volumeLoadVTK(): uint32 datatype not supported";
         std::vector<uint32_t> imageData;
         if (!ReadVTK::readData(filename, header, &imageData)) {
             return false;
@@ -169,7 +168,7 @@ bool VolumeImg::volumeLoadVTK(const std::string& filename)
         std::memcpy(&m_data[0], &imageData[0], nBytes);
     }
     else if (header.datatype == "float32") {
-        std::cerr << "[ERROR] VolumeImage::volumeLoadVTK(): float32 datatype not supported" << std::endl;
+        errorLog() << "VolumeImage::volumeLoadVTK(): float32 datatype not supported";
         std::vector<float> imageData;
         if (!ReadVTK::readData(filename, header, &imageData)) {
             return false;
@@ -191,7 +190,7 @@ std::uint8_t VolumeImg::Int16ToUint8(std::int16_t _imageVal)
     // first ensure that the value is in [-1024 ; 3071] (apply threshold if not)
     _imageVal = std::max((std::int16_t )-1024, std::min((std::int16_t)3071, _imageVal));
     // cross multiplication to convert value into [0 ; 255]
-    _imageVal = 255.0f * ((float(_imageVal) + 1024.0f) / 4095.0f);
+    _imageVal = static_cast<int>(255.0f * ((float(_imageVal) + 1024.0f) / 4095.0f));
     return std::uint8_t(_imageVal);
 }
 
@@ -207,6 +206,6 @@ void VolumeImg::convertInt16ToUint8(std::vector<int16_t>* _imageData)
         value = std::max(-1024.0f, std::min(3071.0f, value));
         // cross multiplication to convert value into [0 ; 255]
         value = 255.0f * ((value + 1024.0f) / 4095.0f);
-        m_data[id] = value;
+        m_data[id] = static_cast<int>(value);
     }
 }
