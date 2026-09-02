@@ -867,7 +867,7 @@ int main(int argc, char** argv)
         << " - Mouse right button (3D view): light trackball" << std::endl
         << " - Mouse middle button: panning" << std::endl
         << " - Mouse scroll: camera zoom" << std::endl
-        << " - R: re-init trackball and cameras" << std::endl << std::endl
+        << " - R: re-init trackball and cameras" << std::endl
         << " - S: re-load shaders" << std::endl << std::endl
         << "Log:" << std::endl;
 

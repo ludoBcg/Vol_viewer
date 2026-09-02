@@ -54,7 +54,7 @@ add_definitions(-DGLEW_STATIC -DGLEW_NO_GLU)
 
 
 # GLFW (to compile before)
-set(GLFW_DIR "${LIBS_DIR}/third_party/glfw-3.4")
+set(GLFW_DIR "${LIBS_DIR}/third_party/glfw-3.5.1")
 include_directories(${GLFW_DIR}/include)
 link_directories(${GLFW_DIR}/build/src/Release)
 SET(GLFW_LIBS glfw3.lib)
