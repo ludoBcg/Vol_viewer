@@ -65,7 +65,7 @@ include_directories(SYSTEM "${LIBS_DIR}/third_party/glm-1.0.3")
 
 
 # ImGui (just add sources to project)
-set(IMGUI_DIR "${LIBS_DIR}/third_party/imgui")
+set(IMGUI_DIR "${LIBS_DIR}/third_party/imgui-1.93.0")
 aux_source_directory("${IMGUI_DIR}" PROJECT_SRCS)
 # new: add appropriate backends
 set(IMGUI_BCK "${IMGUI_DIR}/backends/imgui_impl_glfw.h"
