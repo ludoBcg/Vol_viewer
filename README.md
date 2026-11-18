@@ -32,7 +32,7 @@ External dependencies used for this project are:
 
 
 Vol_viewer is provided as a ready-to-build folder with a CMakeList. Make sure that it points to the correct *libs* directory, then use it to generate a project.
-This project was developed with VisualStudio 2022.
+This project was developed with VisualStudio 2026.
 
 
 ## 4. SOURCES
