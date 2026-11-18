@@ -35,7 +35,7 @@ glm::vec3 m_centerCoords;       /*!<  coords of the center of the scene */
 float m_radScene;               /*!< radius of the scene (i.e., diagonal of the BBox) */
 
 // Light and cameras 
-GLtools::Camera m_camera3D;              /*!<  camera 3D view*/
+GLtools::Camera m_camera3D;     /*!<  camera 3D view*/
 GLtools::Camera m_cameraA;      /*!<  camera Axial view (ortho) */
 GLtools::Camera m_cameraC;      /*!<  camera Coronal view (ortho) */
 GLtools::Camera m_cameraS;      /*!<  camera Sagittal view (ortho) */
@@ -271,7 +271,7 @@ void setupImgui(GLFWwindow *window)
 
     // Scale font for hdpi screen 
     ImFontConfig cfg;
-    ImGui::GetIO().Fonts->AddFontDefault(&cfg)->Scale = 1.0f;
+    ImGui::GetIO().Fonts->AddFontDefault(&cfg)->Scale = 1.5f;
     
     ImGui::StyleColorsDark();
 
